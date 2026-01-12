@@ -1,6 +1,7 @@
 # 営業日報システム API仕様書
 
 ## 目次
+
 1. [API概要](#api概要)
 2. [共通仕様](#共通仕様)
 3. [認証API](#認証api)
@@ -16,18 +17,22 @@
 ## API概要
 
 ### ベースURL
+
 ```
 https://api.example.com/v1
 ```
 
 ### プロトコル
+
 - HTTPS通信のみ対応
 
 ### データフォーマット
+
 - リクエスト: JSON (Content-Type: application/json)
 - レスポンス: JSON
 
 ### 文字コード
+
 - UTF-8
 
 ---
@@ -35,11 +40,13 @@ https://api.example.com/v1
 ## 共通仕様
 
 ### 認証方式
+
 - セッションベース認証（Cookie使用）
 - ログインAPIでセッションIDを発行
 - 以降のAPIリクエストでセッションIDを含むCookieを送信
 
 ### リクエストヘッダー（共通）
+
 ```
 Content-Type: application/json
 Cookie: session_id={session_id}
@@ -48,6 +55,7 @@ Cookie: session_id={session_id}
 ### レスポンス形式（共通）
 
 #### 成功時
+
 ```json
 {
   "status": "success",
@@ -58,6 +66,7 @@ Cookie: session_id={session_id}
 ```
 
 #### エラー時
+
 ```json
 {
   "status": "error",
@@ -75,26 +84,30 @@ Cookie: session_id={session_id}
 ```
 
 ### HTTPステータスコード
-| コード | 説明 |
-|--------|------|
-| 200 | 成功 |
-| 201 | 作成成功 |
-| 204 | 削除成功（レスポンスボディなし） |
-| 400 | リクエストエラー（バリデーションエラー等） |
-| 401 | 認証エラー |
-| 403 | 権限エラー |
-| 404 | リソースが見つからない |
-| 409 | リソースの競合（重複等） |
-| 500 | サーバーエラー |
+
+| コード | 説明                                       |
+| ------ | ------------------------------------------ |
+| 200    | 成功                                       |
+| 201    | 作成成功                                   |
+| 204    | 削除成功（レスポンスボディなし）           |
+| 400    | リクエストエラー（バリデーションエラー等） |
+| 401    | 認証エラー                                 |
+| 403    | 権限エラー                                 |
+| 404    | リソースが見つからない                     |
+| 409    | リソースの競合（重複等）                   |
+| 500    | サーバーエラー                             |
 
 ### ページネーション
+
 リスト取得APIで使用するパラメータ：
+
 ```
 page: ページ番号（1から開始）
 limit: 1ページあたりの件数（デフォルト: 20、最大: 100）
 ```
 
 レスポンス例：
+
 ```json
 {
   "status": "success",
@@ -111,6 +124,7 @@ limit: 1ページあたりの件数（デフォルト: 20、最大: 100）
 ```
 
 ### 日時フォーマット
+
 - ISO 8601形式: `YYYY-MM-DDTHH:MM:SS+09:00`
 - 例: `2026-01-12T15:30:00+09:00`
 
@@ -121,11 +135,13 @@ limit: 1ページあたりの件数（デフォルト: 20、最大: 100）
 ### 1. ログイン
 
 #### エンドポイント
+
 ```
 POST /auth/login
 ```
 
 #### リクエスト
+
 ```json
 {
   "sales_code": "S001",
@@ -134,6 +150,7 @@ POST /auth/login
 ```
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -156,6 +173,7 @@ POST /auth/login
 ```
 
 #### エラー
+
 - `401`: 営業コードまたはパスワードが正しくない
 
 ---
@@ -163,14 +181,17 @@ POST /auth/login
 ### 2. ログアウト
 
 #### エンドポイント
+
 ```
 POST /auth/logout
 ```
 
 #### リクエスト
+
 リクエストボディなし
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -185,14 +206,17 @@ POST /auth/logout
 ### 3. セッション確認
 
 #### エンドポイント
+
 ```
 GET /auth/session
 ```
 
 #### リクエスト
+
 リクエストボディなし
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -211,6 +235,7 @@ GET /auth/session
 ```
 
 #### エラー
+
 - `401`: セッションが無効または期限切れ
 
 ---
@@ -220,27 +245,31 @@ GET /auth/session
 ### 1. 日報一覧取得
 
 #### エンドポイント
+
 ```
 GET /reports
 ```
 
 #### クエリパラメータ
-| パラメータ | 型 | 必須 | 説明 |
-|-----------|----|----|------|
-| start_date | string | No | 対象期間開始日 (YYYY-MM-DD) |
-| end_date | string | No | 対象期間終了日 (YYYY-MM-DD) |
-| sales_id | integer | No | 営業ID（管理者のみ指定可能） |
-| status | string | No | ステータス (draft/submitted/commented) |
-| has_unread_comments | boolean | No | 未読コメントあり (true/false) |
-| page | integer | No | ページ番号（デフォルト: 1） |
-| limit | integer | No | 1ページあたりの件数（デフォルト: 20） |
+
+| パラメータ          | 型      | 必須 | 説明                                   |
+| ------------------- | ------- | ---- | -------------------------------------- |
+| start_date          | string  | No   | 対象期間開始日 (YYYY-MM-DD)            |
+| end_date            | string  | No   | 対象期間終了日 (YYYY-MM-DD)            |
+| sales_id            | integer | No   | 営業ID（管理者のみ指定可能）           |
+| status              | string  | No   | ステータス (draft/submitted/commented) |
+| has_unread_comments | boolean | No   | 未読コメントあり (true/false)          |
+| page                | integer | No   | ページ番号（デフォルト: 1）            |
+| limit               | integer | No   | 1ページあたりの件数（デフォルト: 20）  |
 
 #### リクエスト例
+
 ```
 GET /reports?start_date=2026-01-01&end_date=2026-01-31&status=submitted&page=1&limit=20
 ```
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -273,6 +302,7 @@ GET /reports?start_date=2026-01-01&end_date=2026-01-31&status=submitted&page=1&l
 ```
 
 #### エラー
+
 - `401`: 未認証
 - `403`: 権限なし（他人の日報を取得しようとした場合）
 
@@ -281,21 +311,25 @@ GET /reports?start_date=2026-01-01&end_date=2026-01-31&status=submitted&page=1&l
 ### 2. 日報詳細取得
 
 #### エンドポイント
+
 ```
 GET /reports/{report_id}
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
-| report_id | integer | 日報ID |
+
+| パラメータ | 型      | 説明   |
+| ---------- | ------- | ------ |
+| report_id  | integer | 日報ID |
 
 #### リクエスト例
+
 ```
 GET /reports/123
 ```
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -360,6 +394,7 @@ GET /reports/123
 ```
 
 #### エラー
+
 - `401`: 未認証
 - `403`: 権限なし
 - `404`: 日報が見つからない
@@ -369,11 +404,13 @@ GET /reports/123
 ### 3. 日報作成
 
 #### エンドポイント
+
 ```
 POST /reports
 ```
 
 #### リクエスト
+
 ```json
 {
   "report_date": "2026-01-12",
@@ -400,19 +437,21 @@ POST /reports
 ```
 
 #### バリデーション
-| フィールド | ルール |
-|-----------|--------|
-| report_date | 必須、日付形式、営業ID×日付でユニーク |
-| problem | 1000文字以内 |
-| plan | 1000文字以内 |
-| status | 必須、draft/submitted のいずれか |
-| visit_records | 必須（1件以上）、最大10件 |
-| visit_records.customer_id | 必須 |
-| visit_records.visit_datetime | 必須、日時形式 |
-| visit_records.visit_content | 必須、500文字以内 |
-| visit_records.visit_result | 500文字以内 |
+
+| フィールド                   | ルール                                |
+| ---------------------------- | ------------------------------------- |
+| report_date                  | 必須、日付形式、営業ID×日付でユニーク |
+| problem                      | 1000文字以内                          |
+| plan                         | 1000文字以内                          |
+| status                       | 必須、draft/submitted のいずれか      |
+| visit_records                | 必須（1件以上）、最大10件             |
+| visit_records.customer_id    | 必須                                  |
+| visit_records.visit_datetime | 必須、日時形式                        |
+| visit_records.visit_content  | 必須、500文字以内                     |
+| visit_records.visit_result   | 500文字以内                           |
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -426,6 +465,7 @@ POST /reports
 ```
 
 #### エラー
+
 - `400`: バリデーションエラー
 - `401`: 未認証
 - `409`: 同一日付の日報が既に存在
@@ -435,16 +475,19 @@ POST /reports
 ### 4. 日報更新
 
 #### エンドポイント
+
 ```
 PUT /reports/{report_id}
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
-| report_id | integer | 日報ID |
+
+| パラメータ | 型      | 説明   |
+| ---------- | ------- | ------ |
+| report_id  | integer | 日報ID |
 
 #### リクエスト
+
 ```json
 {
   "problem": "今月の売上目標達成が厳しい状況です。追加施策について相談したいです。",
@@ -471,11 +514,13 @@ PUT /reports/{report_id}
 ```
 
 #### 備考
+
 - 既存の訪問記録を更新する場合は`visit_id`を含める
 - 新規の訪問記録を追加する場合は`visit_id`を含めない
 - リクエストに含まれない既存の訪問記録は削除される
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -487,6 +532,7 @@ PUT /reports/{report_id}
 ```
 
 #### エラー
+
 - `400`: バリデーションエラー
 - `401`: 未認証
 - `403`: 権限なし（自分の日報以外を更新しようとした場合）
@@ -497,22 +543,27 @@ PUT /reports/{report_id}
 ### 5. 日報削除
 
 #### エンドポイント
+
 ```
 DELETE /reports/{report_id}
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
-| report_id | integer | 日報ID |
+
+| パラメータ | 型      | 説明   |
+| ---------- | ------- | ------ |
+| report_id  | integer | 日報ID |
 
 #### リクエスト
+
 リクエストボディなし
 
 #### レスポンス（成功時）
+
 HTTPステータス: 204 No Content
 
 #### エラー
+
 - `401`: 未認証
 - `403`: 権限なし
 - `404`: 日報が見つからない
@@ -522,14 +573,17 @@ HTTPステータス: 204 No Content
 ### 6. 未読コメント数取得
 
 #### エンドポイント
+
 ```
 GET /reports/unread-comments/count
 ```
 
 #### リクエスト
+
 リクエストボディなし
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -540,6 +594,7 @@ GET /reports/unread-comments/count
 ```
 
 #### エラー
+
 - `401`: 未認証
 
 ---
@@ -557,16 +612,19 @@ GET /reports/unread-comments/count
 ### 1. コメント追加
 
 #### エンドポイント
+
 ```
 POST /reports/{report_id}/comments
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
-| report_id | integer | 日報ID |
+
+| パラメータ | 型      | 説明   |
+| ---------- | ------- | ------ |
+| report_id  | integer | 日報ID |
 
 #### リクエスト
+
 ```json
 {
   "comment_type": "problem",
@@ -575,12 +633,14 @@ POST /reports/{report_id}/comments
 ```
 
 #### バリデーション
-| フィールド | ルール |
-|-----------|--------|
+
+| フィールド   | ルール                        |
+| ------------ | ----------------------------- |
 | comment_type | 必須、problem/plan のいずれか |
-| comment_text | 必須、500文字以内 |
+| comment_text | 必須、500文字以内             |
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -600,9 +660,11 @@ POST /reports/{report_id}/comments
 ```
 
 #### 備考
+
 - コメント追加時、日報のステータスが自動的に`commented`に更新される
 
 #### エラー
+
 - `400`: バリデーションエラー
 - `401`: 未認証
 - `403`: 権限なし（管理者以外がコメントしようとした場合）
@@ -613,19 +675,23 @@ POST /reports/{report_id}/comments
 ### 2. コメント確認済み処理
 
 #### エンドポイント
+
 ```
 PUT /comments/{comment_id}/read
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
+
+| パラメータ | 型      | 説明       |
+| ---------- | ------- | ---------- |
 | comment_id | integer | コメントID |
 
 #### リクエスト
+
 リクエストボディなし
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -638,6 +704,7 @@ PUT /comments/{comment_id}/read
 ```
 
 #### エラー
+
 - `401`: 未認証
 - `403`: 権限なし（自分の日報に対するコメント以外を確認済みにしようとした場合）
 - `404`: コメントが見つからない
@@ -647,22 +714,27 @@ PUT /comments/{comment_id}/read
 ### 3. コメント削除
 
 #### エンドポイント
+
 ```
 DELETE /comments/{comment_id}
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
+
+| パラメータ | 型      | 説明       |
+| ---------- | ------- | ---------- |
 | comment_id | integer | コメントID |
 
 #### リクエスト
+
 リクエストボディなし
 
 #### レスポンス（成功時）
+
 HTTPステータス: 204 No Content
 
 #### エラー
+
 - `401`: 未認証
 - `403`: 権限なし（自分が追加したコメント以外を削除しようとした場合）
 - `404`: コメントが見つからない
@@ -674,25 +746,29 @@ HTTPステータス: 204 No Content
 ### 1. 顧客一覧取得
 
 #### エンドポイント
+
 ```
 GET /customers
 ```
 
 #### クエリパラメータ
-| パラメータ | 型 | 必須 | 説明 |
-|-----------|----|----|------|
-| customer_name | string | No | 顧客名（部分一致） |
-| customer_code | string | No | 顧客コード（部分一致） |
-| sales_id | integer | No | 担当営業ID |
-| page | integer | No | ページ番号（デフォルト: 1） |
-| limit | integer | No | 1ページあたりの件数（デフォルト: 20） |
+
+| パラメータ    | 型      | 必須 | 説明                                  |
+| ------------- | ------- | ---- | ------------------------------------- |
+| customer_name | string  | No   | 顧客名（部分一致）                    |
+| customer_code | string  | No   | 顧客コード（部分一致）                |
+| sales_id      | integer | No   | 担当営業ID                            |
+| page          | integer | No   | ページ番号（デフォルト: 1）           |
+| limit         | integer | No   | 1ページあたりの件数（デフォルト: 20） |
 
 #### リクエスト例
+
 ```
 GET /customers?customer_name=株式会社&page=1&limit=20
 ```
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -724,6 +800,7 @@ GET /customers?customer_name=株式会社&page=1&limit=20
 ```
 
 #### エラー
+
 - `401`: 未認証
 
 ---
@@ -731,21 +808,25 @@ GET /customers?customer_name=株式会社&page=1&limit=20
 ### 2. 顧客詳細取得
 
 #### エンドポイント
+
 ```
 GET /customers/{customer_id}
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
+
+| パラメータ  | 型      | 説明   |
+| ----------- | ------- | ------ |
 | customer_id | integer | 顧客ID |
 
 #### リクエスト例
+
 ```
 GET /customers/1
 ```
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -770,6 +851,7 @@ GET /customers/1
 ```
 
 #### エラー
+
 - `401`: 未認証
 - `404`: 顧客が見つからない
 
@@ -778,11 +860,13 @@ GET /customers/1
 ### 3. 顧客作成
 
 #### エンドポイント
+
 ```
 POST /customers
 ```
 
 #### リクエスト
+
 ```json
 {
   "customer_code": "C999",
@@ -797,18 +881,20 @@ POST /customers
 ```
 
 #### バリデーション
-| フィールド | ルール |
-|-----------|--------|
+
+| フィールド    | ルール                                 |
+| ------------- | -------------------------------------- |
 | customer_code | 必須、半角英数字、ユニーク、最大20文字 |
-| customer_name | 必須、最大100文字 |
-| industry | 最大50文字 |
-| postal_code | 郵便番号形式（XXX-XXXX） |
-| address | 最大200文字 |
-| phone | 電話番号形式 |
-| sales_id | 必須、有効な営業ID |
-| notes | 最大500文字 |
+| customer_name | 必須、最大100文字                      |
+| industry      | 最大50文字                             |
+| postal_code   | 郵便番号形式（XXX-XXXX）               |
+| address       | 最大200文字                            |
+| phone         | 電話番号形式                           |
+| sales_id      | 必須、有効な営業ID                     |
+| notes         | 最大500文字                            |
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -822,6 +908,7 @@ POST /customers
 ```
 
 #### エラー
+
 - `400`: バリデーションエラー
 - `401`: 未認証
 - `409`: 顧客コードが既に存在
@@ -831,16 +918,19 @@ POST /customers
 ### 4. 顧客更新
 
 #### エンドポイント
+
 ```
 PUT /customers/{customer_id}
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
+
+| パラメータ  | 型      | 説明   |
+| ----------- | ------- | ------ |
 | customer_id | integer | 顧客ID |
 
 #### リクエスト
+
 ```json
 {
   "customer_name": "A株式会社（更新）",
@@ -854,9 +944,11 @@ PUT /customers/{customer_id}
 ```
 
 #### 備考
+
 - 顧客コードは変更不可
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -868,6 +960,7 @@ PUT /customers/{customer_id}
 ```
 
 #### エラー
+
 - `400`: バリデーションエラー
 - `401`: 未認証
 - `404`: 顧客が見つからない
@@ -877,22 +970,27 @@ PUT /customers/{customer_id}
 ### 5. 顧客削除
 
 #### エンドポイント
+
 ```
 DELETE /customers/{customer_id}
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
+
+| パラメータ  | 型      | 説明   |
+| ----------- | ------- | ------ |
 | customer_id | integer | 顧客ID |
 
 #### リクエスト
+
 リクエストボディなし
 
 #### レスポンス（成功時）
+
 HTTPステータス: 204 No Content
 
 #### エラー
+
 - `400`: 顧客が日報で使用されているため削除不可
 - `401`: 未認証
 - `404`: 顧客が見つからない
@@ -904,25 +1002,29 @@ HTTPステータス: 204 No Content
 ### 1. 営業一覧取得
 
 #### エンドポイント
+
 ```
 GET /sales
 ```
 
 #### クエリパラメータ
-| パラメータ | 型 | 必須 | 説明 |
-|-----------|----|----|------|
-| sales_name | string | No | 営業担当者名（部分一致） |
-| sales_code | string | No | 営業コード（部分一致） |
-| department | string | No | 所属部署 |
-| page | integer | No | ページ番号（デフォルト: 1） |
-| limit | integer | No | 1ページあたりの件数（デフォルト: 20） |
+
+| パラメータ | 型      | 必須 | 説明                                  |
+| ---------- | ------- | ---- | ------------------------------------- |
+| sales_name | string  | No   | 営業担当者名（部分一致）              |
+| sales_code | string  | No   | 営業コード（部分一致）                |
+| department | string  | No   | 所属部署                              |
+| page       | integer | No   | ページ番号（デフォルト: 1）           |
+| limit      | integer | No   | 1ページあたりの件数（デフォルト: 20） |
 
 #### リクエスト例
+
 ```
 GET /sales?department=営業1課&page=1&limit=20
 ```
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -954,6 +1056,7 @@ GET /sales?department=営業1課&page=1&limit=20
 ```
 
 #### エラー
+
 - `401`: 未認証
 - `403`: 権限なし（管理者以外がアクセスした場合）
 
@@ -962,21 +1065,25 @@ GET /sales?department=営業1課&page=1&limit=20
 ### 2. 営業詳細取得
 
 #### エンドポイント
+
 ```
 GET /sales/{sales_id}
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
-| sales_id | integer | 営業ID |
+
+| パラメータ | 型      | 説明   |
+| ---------- | ------- | ------ |
+| sales_id   | integer | 営業ID |
 
 #### リクエスト例
+
 ```
 GET /sales/2
 ```
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -998,6 +1105,7 @@ GET /sales/2
 ```
 
 #### エラー
+
 - `401`: 未認証
 - `403`: 権限なし
 - `404`: 営業が見つからない
@@ -1007,11 +1115,13 @@ GET /sales/2
 ### 3. 営業作成
 
 #### エンドポイント
+
 ```
 POST /sales
 ```
 
 #### リクエスト
+
 ```json
 {
   "sales_code": "S999",
@@ -1025,17 +1135,19 @@ POST /sales
 ```
 
 #### バリデーション
-| フィールド | ルール |
-|-----------|--------|
+
+| フィールド | ルール                                 |
+| ---------- | -------------------------------------- |
 | sales_code | 必須、半角英数字、ユニーク、最大20文字 |
-| sales_name | 必須、最大100文字 |
-| email | 必須、メールアドレス形式、ユニーク |
-| password | 必須、8文字以上、英数字混在 |
-| department | 必須、最大50文字 |
-| manager_id | 有効な営業ID |
-| is_manager | boolean |
+| sales_name | 必須、最大100文字                      |
+| email      | 必須、メールアドレス形式、ユニーク     |
+| password   | 必須、8文字以上、英数字混在            |
+| department | 必須、最大50文字                       |
+| manager_id | 有効な営業ID                           |
+| is_manager | boolean                                |
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -1049,6 +1161,7 @@ POST /sales
 ```
 
 #### エラー
+
 - `400`: バリデーションエラー
 - `401`: 未認証
 - `403`: 権限なし
@@ -1059,16 +1172,19 @@ POST /sales
 ### 4. 営業更新
 
 #### エンドポイント
+
 ```
 PUT /sales/{sales_id}
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
-| sales_id | integer | 営業ID |
+
+| パラメータ | 型      | 説明   |
+| ---------- | ------- | ------ |
+| sales_id   | integer | 営業ID |
 
 #### リクエスト
+
 ```json
 {
   "sales_name": "佐藤花子（更新）",
@@ -1081,10 +1197,12 @@ PUT /sales/{sales_id}
 ```
 
 #### 備考
+
 - 営業コードは変更不可
 - パスワードは変更する場合のみ含める（省略可能）
 
 #### レスポンス（成功時）
+
 ```json
 {
   "status": "success",
@@ -1096,6 +1214,7 @@ PUT /sales/{sales_id}
 ```
 
 #### エラー
+
 - `400`: バリデーションエラー
 - `401`: 未認証
 - `403`: 権限なし
@@ -1107,22 +1226,27 @@ PUT /sales/{sales_id}
 ### 5. 営業削除
 
 #### エンドポイント
+
 ```
 DELETE /sales/{sales_id}
 ```
 
 #### パスパラメータ
-| パラメータ | 型 | 説明 |
-|-----------|----|----|
-| sales_id | integer | 営業ID |
+
+| パラメータ | 型      | 説明   |
+| ---------- | ------- | ------ |
+| sales_id   | integer | 営業ID |
 
 #### リクエスト
+
 リクエストボディなし
 
 #### レスポンス（成功時）
+
 HTTPステータス: 204 No Content
 
 #### エラー
+
 - `400`: 営業が日報または顧客で使用されているため削除不可
 - `401`: 未認証
 - `403`: 権限なし
@@ -1132,21 +1256,22 @@ HTTPステータス: 204 No Content
 
 ## エラーコード一覧
 
-| エラーコード | HTTPステータス | 説明 |
-|------------|--------------|------|
-| AUTH_INVALID_CREDENTIALS | 401 | 営業コードまたはパスワードが正しくない |
-| AUTH_SESSION_EXPIRED | 401 | セッションが期限切れ |
-| AUTH_UNAUTHORIZED | 401 | 認証が必要 |
-| AUTH_FORBIDDEN | 403 | 権限がない |
-| VALIDATION_ERROR | 400 | 入力値が不正 |
-| RESOURCE_NOT_FOUND | 404 | リソースが見つからない |
-| RESOURCE_CONFLICT | 409 | リソースの競合（重複等） |
-| RESOURCE_IN_USE | 400 | リソースが使用されているため削除不可 |
-| SERVER_ERROR | 500 | サーバー内部エラー |
+| エラーコード             | HTTPステータス | 説明                                   |
+| ------------------------ | -------------- | -------------------------------------- |
+| AUTH_INVALID_CREDENTIALS | 401            | 営業コードまたはパスワードが正しくない |
+| AUTH_SESSION_EXPIRED     | 401            | セッションが期限切れ                   |
+| AUTH_UNAUTHORIZED        | 401            | 認証が必要                             |
+| AUTH_FORBIDDEN           | 403            | 権限がない                             |
+| VALIDATION_ERROR         | 400            | 入力値が不正                           |
+| RESOURCE_NOT_FOUND       | 404            | リソースが見つからない                 |
+| RESOURCE_CONFLICT        | 409            | リソースの競合（重複等）               |
+| RESOURCE_IN_USE          | 400            | リソースが使用されているため削除不可   |
+| SERVER_ERROR             | 500            | サーバー内部エラー                     |
 
 ### エラーレスポンス例
 
 #### バリデーションエラー
+
 ```json
 {
   "status": "error",
@@ -1168,6 +1293,7 @@ HTTPステータス: 204 No Content
 ```
 
 #### 認証エラー
+
 ```json
 {
   "status": "error",
@@ -1179,6 +1305,7 @@ HTTPステータス: 204 No Content
 ```
 
 #### リソース競合エラー
+
 ```json
 {
   "status": "error",
@@ -1194,16 +1321,19 @@ HTTPステータス: 204 No Content
 ## セキュリティ仕様
 
 ### 1. 認証・認可
+
 - セッションベース認証
 - セッションタイムアウト: 30分
 - ログイン失敗時のレート制限: 5回/5分
 
 ### 2. データ保護
+
 - HTTPS通信のみ
 - パスワードはbcryptでハッシュ化
 - 個人情報は適切にマスキング
 
 ### 3. セキュリティヘッダー
+
 ```
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
@@ -1213,15 +1343,19 @@ Content-Security-Policy: default-src 'self'
 ```
 
 ### 4. CORS設定
+
 許可されたオリジンからのリクエストのみ受付
 
 ### 5. SQLインジェクション対策
+
 プリペアドステートメントの使用
 
 ### 6. XSS対策
+
 出力時のエスケープ処理
 
 ### 7. CSRF対策
+
 CSRFトークンの検証
 
 ---
@@ -1229,12 +1363,15 @@ CSRFトークンの検証
 ## レート制限
 
 ### 一般API
+
 - 100リクエスト/分/ユーザー
 
 ### ログインAPI
+
 - 5リクエスト/5分/IPアドレス
 
 ### レート制限超過時のレスポンス
+
 ```
 HTTP/1.1 429 Too Many Requests
 ```
@@ -1253,8 +1390,8 @@ HTTP/1.1 429 Too Many Requests
 
 ## 変更履歴
 
-| 版 | 改訂日 | 改訂内容 |
-|----|--------|----------|
+| 版  | 改訂日     | 改訂内容 |
+| --- | ---------- | -------- |
 | 1.0 | 2026-01-12 | 初版作成 |
 
 ---

@@ -149,17 +149,17 @@ type Result<T> = { success: true; data: T } | { success: false; error: string };
 
 ### 命名規則
 
-| 対象 | 命名規則 | 例 |
-|-----|---------|-----|
-| コンポーネント | PascalCase | `ReportList`, `CommentCard` |
-| ファイル（コンポーネント） | kebab-case | `report-list.tsx`, `comment-card.tsx` |
-| 関数 | camelCase | `createReport`, `getReportById` |
-| 変数 | camelCase | `reportData`, `userId` |
-| 定数 | UPPER_SNAKE_CASE | `MAX_VISITS`, `API_BASE_URL` |
-| 型・インターフェース | PascalCase | `Report`, `CreateReportInput` |
-| プライベート変数 | _camelCase | `_internalState` |
-| API Routes | kebab-case | `/api/v1/reports`, `/api/v1/comments` |
-| データベーステーブル | PascalCase | `DailyReport`, `VisitRecord` |
+| 対象                       | 命名規則         | 例                                    |
+| -------------------------- | ---------------- | ------------------------------------- |
+| コンポーネント             | PascalCase       | `ReportList`, `CommentCard`           |
+| ファイル（コンポーネント） | kebab-case       | `report-list.tsx`, `comment-card.tsx` |
+| 関数                       | camelCase        | `createReport`, `getReportById`       |
+| 変数                       | camelCase        | `reportData`, `userId`                |
+| 定数                       | UPPER_SNAKE_CASE | `MAX_VISITS`, `API_BASE_URL`          |
+| 型・インターフェース       | PascalCase       | `Report`, `CreateReportInput`         |
+| プライベート変数           | \_camelCase      | `_internalState`                      |
+| API Routes                 | kebab-case       | `/api/v1/reports`, `/api/v1/comments` |
+| データベーステーブル       | PascalCase       | `DailyReport`, `VisitRecord`          |
 
 #### コンポーネント命名のパターン
 
@@ -308,12 +308,7 @@ interface ButtonProps {
   onClick?: () => void;
 }
 
-export function Button({
-  children,
-  variant = 'primary',
-  disabled = false,
-  onClick
-}: ButtonProps) {
+export function Button({ children, variant = 'primary', disabled = false, onClick }: ButtonProps) {
   // ...
 }
 ```
@@ -369,15 +364,18 @@ export const createReportSchema = z.object({
   problem: z.string().max(1000).optional(),
   plan: z.string().max(1000).optional(),
   status: z.enum(['draft', 'submitted']),
-  visitRecords: z.array(
-    z.object({
-      customerId: z.string(),
-      visitDatetime: z.string().datetime(),
-      visitContent: z.string().max(500),
-      visitResult: z.string().max(500).optional(),
-      displayOrder: z.number().int().positive()
-    })
-  ).min(1).max(10)
+  visitRecords: z
+    .array(
+      z.object({
+        customerId: z.string(),
+        visitDatetime: z.string().datetime(),
+        visitContent: z.string().max(500),
+        visitResult: z.string().max(500).optional(),
+        displayOrder: z.number().int().positive(),
+      })
+    )
+    .min(1)
+    .max(10),
 });
 
 export type CreateReportInput = z.infer<typeof createReportSchema>;
@@ -393,10 +391,8 @@ return c.json(
     error: {
       code: 'VALIDATION_ERROR',
       message: 'Invalid input',
-      details: [
-        { field: 'reportDate', message: 'Date is required' }
-      ]
-    }
+      details: [{ field: 'reportDate', message: 'Date is required' }],
+    },
   },
   400
 );
@@ -412,8 +408,8 @@ const report = await prisma.dailyReport.findUnique({
   where: { id: reportId },
   include: {
     visitRecords: true,
-    comments: true
-  }
+    comments: true,
+  },
 });
 
 // 作成
@@ -423,22 +419,20 @@ const report = await prisma.dailyReport.create({
     salesId: userId,
     status: 'draft',
     visitRecords: {
-      create: [
-        { customerId, visitDatetime, visitContent }
-      ]
-    }
-  }
+      create: [{ customerId, visitDatetime, visitContent }],
+    },
+  },
 });
 
 // 更新
 await prisma.dailyReport.update({
   where: { id: reportId },
-  data: { status: 'submitted' }
+  data: { status: 'submitted' },
 });
 
 // 削除
 await prisma.dailyReport.delete({
-  where: { id: reportId }
+  where: { id: reportId },
 });
 ```
 
@@ -476,8 +470,8 @@ test('creates a new report with visit records', async () => {
     reportDate: '2026-01-12',
     status: 'submitted',
     visitRecords: [
-      { customerId: 'C001', visitDatetime: '2026-01-12T10:00:00Z', visitContent: 'Meeting' }
-    ]
+      { customerId: 'C001', visitDatetime: '2026-01-12T10:00:00Z', visitContent: 'Meeting' },
+    ],
   };
 
   const report = await createReport(input, 'S001');
@@ -511,11 +505,7 @@ export function calculateTotal(items: Item[]) {
 
 // テストでは実際のデータを使用
 test('calculates total correctly', () => {
-  const items = [
-    { price: 100 },
-    { price: 200 },
-    { price: 300 }
-  ];
+  const items = [{ price: 100 }, { price: 200 }, { price: 300 }];
   expect(calculateTotal(items)).toBe(600);
 });
 ```
@@ -539,7 +529,7 @@ describe('createReport', () => {
     const input = {
       reportDate: '2026-01-12',
       status: 'submitted',
-      visitRecords: Array(11).fill({ customerId: 'C001', visitContent: 'test' })
+      visitRecords: Array(11).fill({ customerId: 'C001', visitContent: 'test' }),
     };
 
     await expect(createReport(input, 'S001')).rejects.toThrow();
@@ -578,7 +568,9 @@ describe('createReport', () => {
 
   test('creates a report with valid data', async () => {
     // Arrange
-    const input = { /* ... */ };
+    const input = {
+      /* ... */
+    };
 
     // Act
     const result = await createReport(input, 'S001');
@@ -597,14 +589,14 @@ import { vi } from 'vitest';
 
 // 外部APIのモック
 vi.mock('@/lib/external-api', () => ({
-  fetchData: vi.fn().mockResolvedValue({ data: 'mocked' })
+  fetchData: vi.fn().mockResolvedValue({ data: 'mocked' }),
 }));
 
 // Prismaのモック（最小限に）
 const mockPrisma = {
   dailyReport: {
-    create: vi.fn().mockResolvedValue({ id: '1', status: 'submitted' })
-  }
+    create: vi.fn().mockResolvedValue({ id: '1', status: 'submitted' }),
+  },
 };
 ```
 
@@ -648,6 +640,7 @@ Claude Codeがコミットを行う場合はタイトルに「[AI生成]」と�
 ```
 
 **Type**:
+
 - `feat`: 新機能
 - `fix`: バグ修正
 - `docs`: ドキュメント
@@ -657,6 +650,7 @@ Claude Codeがコミットを行う場合はタイトルに「[AI生成]」と�
 - `chore`: ビルド、設定等
 
 **例（人間が作成する場合）**:
+
 ```
 feat(reports): コメント確認機能を追加
 
@@ -668,6 +662,7 @@ Closes #123
 ```
 
 **例（Claude Codeが作成する場合）**:
+
 ```
 feat(reports): [AI生成] コメント確認機能を追加
 

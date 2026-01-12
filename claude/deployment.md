@@ -12,6 +12,7 @@ Google Cloud Runへのデプロイ手順を記載します。
    - 請求先アカウントを設定
 
 2. **gcloud CLI のインストール**
+
    ```bash
    # macOS (Homebrew)
    brew install google-cloud-sdk
@@ -24,6 +25,7 @@ Google Cloud Runへのデプロイ手順を記載します。
    ```
 
    バージョン確認:
+
    ```bash
    gcloud --version
    ```
@@ -34,6 +36,7 @@ Google Cloud Runへのデプロイ手順を記載します。
    - 接続文字列を取得
 
 4. **Docker のインストール**
+
    ```bash
    # macOS
    brew install docker
@@ -363,6 +366,7 @@ curl https://[SERVICE-URL]/api/health
 ### 3. 動作テスト
 
 ブラウザでアプリケーションにアクセスし、以下を確認：
+
 - ログイン画面が表示されるか
 - ログインできるか
 - 日報作成ができるか
@@ -406,6 +410,7 @@ jobs:
 ### GitHub Secretsの設定
 
 GitHubリポジトリの Settings > Secrets で以下を設定：
+
 - `GCP_PROJECT_ID`: GCPプロジェクトID
 - `GCP_SA_KEY`: サービスアカウントキー（JSON形式）
 
@@ -472,6 +477,7 @@ gcloud run services logs read sales-daily-report \
 ### Cloud Monitoringでメトリクス監視
 
 GCP Consoleの「Monitoring」セクションで以下を確認：
+
 - リクエスト数
 - レスポンスタイム
 - エラー率
@@ -496,6 +502,7 @@ gcloud alpha monitoring policies create \
 **症状**: デプロイ時にエラーが発生
 
 **解決策**:
+
 1. ログを確認: `gcloud builds log [BUILD-ID]`
 2. Dockerイメージをローカルでビルド・テスト
 3. 環境変数が正しく設定されているか確認
@@ -505,6 +512,7 @@ gcloud alpha monitoring policies create \
 **症状**: デプロイ成功後、アプリケーションが起動しない
 
 **解決策**:
+
 1. ログを確認: `gcloud run services logs read`
 2. 環境変数（特に`DATABASE_URL`）を確認
 3. Prismaクライアントが正しく生成されているか確認
@@ -514,6 +522,7 @@ gcloud alpha monitoring policies create \
 **症状**: `MongoServerError: Authentication failed`
 
 **解決策**:
+
 1. MongoDB AtlasのIPホワイトリストを確認
 2. 接続文字列の特殊文字がURLエンコードされているか確認
 3. データベースユーザーの権限を確認
@@ -523,6 +532,7 @@ gcloud alpha monitoring policies create \
 **症状**: レスポンスが遅い
 
 **解決策**:
+
 1. CPU・メモリリソースを増やす
 2. 最小インスタンス数を1以上に設定（コールドスタート対策）
 3. データベースのクエリを最適化
@@ -533,6 +543,7 @@ gcloud alpha monitoring policies create \
 ### 無料枠の活用
 
 Cloud Runの無料枠：
+
 - 月間200万リクエスト
 - 36万vCPU秒
 - 18万GiB秒のメモリ

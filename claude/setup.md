@@ -98,6 +98,7 @@ NODE_ENV="development"
 ```
 
 **セッション秘密鍵の生成方法**:
+
 ```bash
 # ランダムな文字列を生成
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
@@ -139,10 +140,12 @@ npm run dev
 ```
 
 ブラウザで以下のURLにアクセス：
+
 - **アプリケーション**: http://localhost:3000
 - **API**: http://localhost:3000/api/v1
 
 **成功時の表示**:
+
 ```
 ▲ Next.js 14.x.x
 - Local:        http://localhost:3000
@@ -205,6 +208,7 @@ npm run test:coverage
 **症状**: `npm install` が失敗する
 
 **解決策**:
+
 ```bash
 # node_modulesとpackage-lock.jsonを削除
 rm -rf node_modules package-lock.json
@@ -221,6 +225,7 @@ npm install
 **症状**: `@prisma/client` が見つからないエラー
 
 **解決策**:
+
 ```bash
 # Prismaクライアントを再生成
 npx prisma generate
@@ -231,6 +236,7 @@ npx prisma generate
 **症状**: `MongoServerError: Authentication failed` 等
 
 **解決策**:
+
 1. `.env.local` の `DATABASE_URL` を確認
 2. MongoDB Atlasの場合、IPアドレスがホワイトリストに登録されているか確認
 3. ユーザー名・パスワードが正しいか確認
@@ -241,6 +247,7 @@ npx prisma generate
 **症状**: `Port 3000 is already in use`
 
 **解決策**:
+
 ```bash
 # 別のポートを使用
 PORT=3001 npm run dev
@@ -259,6 +266,7 @@ taskkill /PID <PID> /F
 **症状**: ファイルを変更しても反映されない
 
 **解決策**:
+
 1. ブラウザのキャッシュをクリア
 2. 開発サーバーを再起動
 3. `.next` ディレクトリを削除して再ビルド:
@@ -272,6 +280,7 @@ taskkill /PID <PID> /F
 **症状**: 型エラーが発生する
 
 **解決策**:
+
 ```bash
 # 型定義を再生成
 npx prisma generate
@@ -282,19 +291,19 @@ npx prisma generate
 
 ## 便利なコマンド一覧
 
-| コマンド | 説明 |
-|---------|------|
-| `npm run dev` | 開発サーバー起動 |
-| `npm run build` | 本番ビルド |
-| `npm run start` | 本番サーバー起動 |
-| `npm run lint` | ESLint実行 |
-| `npm run format` | Prettier実行 |
-| `npm test` | テスト実行 |
-| `npm run type-check` | 型チェック |
-| `npx prisma studio` | Prisma Studio起動 |
+| コマンド              | 説明                   |
+| --------------------- | ---------------------- |
+| `npm run dev`         | 開発サーバー起動       |
+| `npm run build`       | 本番ビルド             |
+| `npm run start`       | 本番サーバー起動       |
+| `npm run lint`        | ESLint実行             |
+| `npm run format`      | Prettier実行           |
+| `npm test`            | テスト実行             |
+| `npm run type-check`  | 型チェック             |
+| `npx prisma studio`   | Prisma Studio起動      |
 | `npx prisma generate` | Prismaクライアント生成 |
-| `npx prisma db push` | スキーマをDBにプッシュ |
-| `npx prisma db seed` | 初期データ投入 |
+| `npx prisma db push`  | スキーマをDBにプッシュ |
+| `npx prisma db seed`  | 初期データ投入         |
 
 ## VS Code設定（推奨）
 
@@ -308,9 +317,7 @@ npx prisma generate
     "source.fixAll.eslint": true
   },
   "typescript.tsdk": "node_modules/typescript/lib",
-  "tailwindCSS.experimental.classRegex": [
-    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
-  ]
+  "tailwindCSS.experimental.classRegex": [["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]]
 }
 ```
 

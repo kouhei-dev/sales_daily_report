@@ -103,14 +103,14 @@ sequenceDiagram
 
 ### 認可制御
 
-| エンドポイント | 営業担当者 | 管理者（上長） |
-|--------------|-----------|--------------|
-| 日報作成・編集 | ○（自分のみ） | ○ |
-| 日報閲覧 | ○（自分のみ） | ○（全員） |
-| コメント追加 | × | ○ |
-| コメント確認済み | ○（自分の日報） | × |
-| 顧客マスタ | ○（閲覧・編集） | ○ |
-| 営業マスタ | × | ○ |
+| エンドポイント   | 営業担当者      | 管理者（上長） |
+| ---------------- | --------------- | -------------- |
+| 日報作成・編集   | ○（自分のみ）   | ○              |
+| 日報閲覧         | ○（自分のみ）   | ○（全員）      |
+| コメント追加     | ×               | ○              |
+| コメント確認済み | ○（自分の日報） | ×              |
+| 顧客マスタ       | ○（閲覧・編集） | ○              |
+| 営業マスタ       | ×               | ○              |
 
 ## データモデル
 
@@ -127,6 +127,7 @@ sequenceDiagram
 詳細なER図とフィールド定義は [要件定義書](../requirements_definition.md#5-er図) を参照してください。
 
 **主要なリレーションシップ**:
+
 - Sales 1 : N DailyReport（営業担当者は複数の日報を持つ）
 - DailyReport 1 : N VisitRecord（日報は複数の訪問記録を持つ）
 - DailyReport 1 : N Comment（日報は複数のコメントを持つ）
@@ -140,6 +141,7 @@ sequenceDiagram
 Prismaスキーマは `prisma/schema.prisma` に定義します。
 
 **例**:
+
 ```prisma
 model Sales {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -195,21 +197,21 @@ model DailyReport {
 
 ### エンドポイント一覧（主要）
 
-| カテゴリ | メソッド | エンドポイント | 説明 |
-|---------|---------|--------------|------|
-| 認証 | POST | /api/v1/auth/login | ログイン |
-| 認証 | POST | /api/v1/auth/logout | ログアウト |
-| 認証 | GET | /api/v1/auth/session | セッション確認 |
-| 日報 | GET | /api/v1/reports | 日報一覧取得 |
-| 日報 | GET | /api/v1/reports/:id | 日報詳細取得 |
-| 日報 | POST | /api/v1/reports | 日報作成 |
-| 日報 | PUT | /api/v1/reports/:id | 日報更新 |
-| 日報 | DELETE | /api/v1/reports/:id | 日報削除 |
-| コメント | POST | /api/v1/reports/:id/comments | コメント追加 |
-| コメント | PUT | /api/v1/comments/:id/read | コメント確認済み |
-| 顧客 | GET | /api/v1/customers | 顧客一覧取得 |
-| 顧客 | POST | /api/v1/customers | 顧客作成 |
-| 営業 | GET | /api/v1/sales | 営業一覧取得 |
+| カテゴリ | メソッド | エンドポイント               | 説明             |
+| -------- | -------- | ---------------------------- | ---------------- |
+| 認証     | POST     | /api/v1/auth/login           | ログイン         |
+| 認証     | POST     | /api/v1/auth/logout          | ログアウト       |
+| 認証     | GET      | /api/v1/auth/session         | セッション確認   |
+| 日報     | GET      | /api/v1/reports              | 日報一覧取得     |
+| 日報     | GET      | /api/v1/reports/:id          | 日報詳細取得     |
+| 日報     | POST     | /api/v1/reports              | 日報作成         |
+| 日報     | PUT      | /api/v1/reports/:id          | 日報更新         |
+| 日報     | DELETE   | /api/v1/reports/:id          | 日報削除         |
+| コメント | POST     | /api/v1/reports/:id/comments | コメント追加     |
+| コメント | PUT      | /api/v1/comments/:id/read    | コメント確認済み |
+| 顧客     | GET      | /api/v1/customers            | 顧客一覧取得     |
+| 顧客     | POST     | /api/v1/customers            | 顧客作成         |
+| 営業     | GET      | /api/v1/sales                | 営業一覧取得     |
 
 ### OpenAPI + Zod による型安全なAPI
 
@@ -222,13 +224,18 @@ export const createReportSchema = z.object({
   problem: z.string().max(1000).optional(),
   plan: z.string().max(1000).optional(),
   status: z.enum(['draft', 'submitted']),
-  visitRecords: z.array(z.object({
-    customerId: z.string(),
-    visitDatetime: z.string().datetime(),
-    visitContent: z.string().max(500),
-    visitResult: z.string().max(500).optional(),
-    displayOrder: z.number().int().positive()
-  })).min(1).max(10)
+  visitRecords: z
+    .array(
+      z.object({
+        customerId: z.string(),
+        visitDatetime: z.string().datetime(),
+        visitContent: z.string().max(500),
+        visitResult: z.string().max(500).optional(),
+        displayOrder: z.number().int().positive(),
+      })
+    )
+    .min(1)
+    .max(10),
 });
 
 export type CreateReportInput = z.infer<typeof createReportSchema>;
@@ -299,12 +306,14 @@ app/
 ### Server ComponentsとClient Componentsの使い分け
 
 **Server Components（デフォルト）**:
+
 - ページコンポーネント（page.tsx）
 - レイアウトコンポーネント（layout.tsx）
 - データフェッチが必要なコンポーネント
 - SEOが重要なコンポーネント
 
 **Client Components（"use client"指定）**:
+
 - インタラクティブなUIコンポーネント（ボタン、フォーム等）
 - useState, useEffect等のフックを使用するコンポーネント
 - イベントハンドラを持つコンポーネント
