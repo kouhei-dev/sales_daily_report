@@ -34,3 +34,40 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Prisma
+prisma/.env
+prisma/migrations/.env
+
+# Testing
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# Turbo
+.turbo/
+
+# Docker
+.dockerignore.backup
+
+# Cloud
+.gcloud/
+
+# OS
+Thumbs.db
+
+# Logs
+logs/
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+.tmp/
