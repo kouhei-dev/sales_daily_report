@@ -1,6 +1,6 @@
 # 営業日報システム
 
-[![CI](https://github.com/your-org/sales_daily_report/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/sales_daily_report/actions/workflows/ci.yml)
+[![CI](https://github.com/kouhei-dev/sales_daily_report/actions/workflows/ci.yml/badge.svg)](https://github.com/kouhei-dev/sales_daily_report/actions/workflows/ci.yml)
 
 営業担当者が日々の営業活動を記録し、上長が確認・コメントできる日報管理システムです。
 
@@ -29,7 +29,7 @@
 
 ```bash
 # リポジトリのクローン
-git clone <repository-url>
+git clone https://github.com/kouhei-dev/sales_daily_report.git
 cd sales_daily_report
 
 # 依存パッケージのインストール
@@ -206,7 +206,3 @@ make url
 ## 📝 ライセンス
 
 このプロジェクトは私的利用のため、ライセンスは未定です。
-
-## 📮 お問い合わせ
-
-質問や提案がある場合は、Issueを作成してください。

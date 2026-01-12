@@ -62,7 +62,7 @@
 
 ```bash
 # リポジトリのクローン
-git clone <repository-url>
+git clone https://github.com/kouhei-dev/sales_daily_report.git
 cd sales_daily_report
 
 # 依存パッケージのインストール

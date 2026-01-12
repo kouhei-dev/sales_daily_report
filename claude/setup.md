@@ -49,10 +49,10 @@
 
 ```bash
 # HTTPSの場合
-git clone https://github.com/your-org/sales_daily_report.git
+git clone https://github.com/kouhei-dev/sales_daily_report.git
 
 # SSHの場合
-git clone git@github.com:your-org/sales_daily_report.git
+git clone git@github.com:kouhei-dev/sales_daily_report.git
 
 # ディレクトリに移動
 cd sales_daily_report
