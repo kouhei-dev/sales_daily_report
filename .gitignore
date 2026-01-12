@@ -36,7 +36,7 @@ yarn-error.log*
 next-env.d.ts
 
 # IDEs
-.vscode/
+# .vscode/ はチーム設定として共有するためコミット対象
 .idea/
 *.swp
 *.swo
