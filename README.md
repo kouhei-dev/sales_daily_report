@@ -1,0 +1,148 @@
+# 営業日報システム
+
+[![CI](https://github.com/your-org/sales_daily_report/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/sales_daily_report/actions/workflows/ci.yml)
+
+営業担当者が日々の営業活動を記録し、上長が確認・コメントできる日報管理システムです。
+
+## 📚 ドキュメント
+
+詳細なドキュメントは [claude/](./claude/) ディレクトリを参照してください。
+
+- [プロジェクト概要](./claude/README.md)
+- [技術スタック](./claude/tech-stack.md)
+- [アーキテクチャ](./claude/architecture.md)
+- [セットアップガイド](./claude/setup.md)
+- [開発ガイドライン](./claude/guidelines.md)
+- [デプロイ手順](./claude/deployment.md)
+
+## 🚀 クイックスタート
+
+### 前提条件
+
+- Node.js 18.17.0以上
+- MongoDB（ローカルまたはMongoDB Atlas）
+- Git
+
+### セットアップ
+
+```bash
+# リポジトリのクローン
+git clone <repository-url>
+cd sales_daily_report
+
+# 依存パッケージのインストール
+npm install
+
+# 環境変数の設定
+cp .env.example .env.local
+# .env.local を編集して必要な環境変数を設定
+
+# Prismaのセットアップ
+npx prisma generate
+npx prisma db push
+
+# 開発サーバーの起動
+npm run dev
+```
+
+http://localhost:3000 でアプリケーションにアクセスできます。
+
+## 🛠️ 開発コマンド
+
+```bash
+# 開発サーバー起動
+npm run dev
+
+# Lintチェック
+npm run lint
+
+# コードフォーマット
+npm run format
+
+# 型チェック
+npm run type-check
+
+# テスト実行
+npm test
+
+# テスト（ウォッチモード）
+npm run test:watch
+
+# カバレッジ付きテスト
+npm run test:coverage
+
+# 本番ビルド
+npm run build
+
+# 本番サーバー起動
+npm run start
+```
+
+## 🧪 テスト
+
+このプロジェクトは [Vitest](https://vitest.dev/) と [React Testing Library](https://testing-library.com/react) を使用しています。
+
+```bash
+# 全テストを実行
+npm test
+
+# ウォッチモードでテスト実行
+npm run test:watch
+
+# カバレッジレポート生成
+npm run test:coverage
+```
+
+テストファイルは `__tests__/` ディレクトリに配置します。
+
+## 📦 技術スタック
+
+- **フロントエンド**: Next.js 16 (App Router), React 18, TypeScript
+- **UIコンポーネント**: shadcn/ui + Tailwind CSS
+- **バックエンド**: Next.js API Routes (Hono)
+- **APIスキーマ**: OpenAPI + Zod
+- **データベース**: MongoDB + Prisma
+- **テスト**: Vitest + React Testing Library
+- **Linter/Formatter**: ESLint + Prettier
+- **CI/CD**: GitHub Actions
+- **デプロイ**: Google Cloud Run
+
+## 🤝 コントリビューション
+
+1. このリポジトリをフォーク
+2. フィーチャーブランチを作成 (`git checkout -b feature/amazing-feature`)
+3. 変更をコミット (`git commit -m 'feat: add amazing feature'`)
+4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
+5. プルリクエストを作成
+
+### コミットメッセージ規約
+
+このプロジェクトは [Conventional Commits](https://www.conventionalcommits.org/) 形式を使用しています（日本語）。
+
+```
+<type>(<scope>): <件名>
+
+<本文>
+
+<フッター>
+```
+
+**Type**:
+
+- `feat`: 新機能
+- `fix`: バグ修正
+- `docs`: ドキュメント
+- `style`: フォーマット
+- `refactor`: リファクタリング
+- `test`: テスト追加・修正
+- `chore`: ビルド、設定等
+
+詳細は [開発ガイドライン](./claude/guidelines.md) を参照してください。
+
+## 📝 ライセンス
+
+このプロジェクトは私的利用のため、ライセンスは未定です。
+
+## 📮 お問い合わせ
+
+質問や提案がある場合は、Issueを作成してください。
