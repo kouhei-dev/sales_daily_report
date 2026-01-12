@@ -4,6 +4,8 @@
 
 営業担当者が日々の営業活動を記録し、上長が確認・コメントできる日報管理システムです。
 
+※このリポジトリはClaude Code学習のための架空のプロジェクトです。
+
 ## 📚 ドキュメント
 
 詳細なドキュメントは [claude/](./claude/) ディレクトリを参照してください。
@@ -94,6 +96,46 @@ npm run test:coverage
 ```
 
 テストファイルは `__tests__/` ディレクトリに配置します。
+
+## 🚀 デプロイ
+
+### Google Cloud Runへのデプロイ
+
+Makefileを使用してCloud Runへ簡単にデプロイできます。
+
+```bash
+# ヘルプを表示
+make help
+
+# 初期設定（初回のみ）
+make setup
+
+# フルデプロイ（ビルド→プッシュ→デプロイ）
+make deploy-full
+
+# ログを確認
+make logs
+
+# サービスURLを表示
+make url
+```
+
+#### 主要なMakeコマンド
+
+| コマンド                  | 説明                                     |
+| ------------------------- | ---------------------------------------- |
+| `make setup`              | 初期設定（GCP設定、API有効化）           |
+| `make build`              | Dockerイメージをビルド                   |
+| `make push`               | イメージをArtifact Registryにプッシュ    |
+| `make deploy`             | Cloud Runにデプロイ                      |
+| `make deploy-full`        | フルデプロイ（ビルド→プッシュ→デプロイ） |
+| `make deploy-cloud-build` | Cloud Buildでデプロイ                    |
+| `make set-env`            | 環境変数を設定                           |
+| `make logs`               | ログをリアルタイム表示                   |
+| `make url`                | サービスURLを表示                        |
+| `make rollback`           | 前のバージョンにロールバック             |
+
+詳細は [デプロイ手順](./claude/deployment.md) を参照してください。
 
 ## 📦 技術スタック
 
