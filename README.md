@@ -181,19 +181,7 @@ make url
 
 詳細は [開発ガイドライン](./claude/guidelines.md) を参照してください。
 
-## ⚠️ 既知の課題・TODO
-
-### CI/CDワークフロー
-
-- **ESLintチェック**: 現在CI/CDワークフローとpre-commitフックから一時的に無効化されています
-  - **理由**: ESLint 8とeslint-config-next 16の依存関係の競合、およびNext.js appディレクトリの設定調整が必要
-  - **対応予定**: Next.js appディレクトリの基本構築完了後に再追加
-  - **再追加時の作業**:
-    1. `.github/workflows/ci.yml` のコメントアウトを解除
-    2. `package.json` の `lint-staged` 設定に `eslint --fix` を追加
-  - **参照**: [.github/workflows/ci.yml#L31-L35](https://github.com/kouhei-dev/sales_daily_report/blob/main/.github/workflows/ci.yml#L31-L35)
-
-### 実装予定の機能
+## 📋 実装予定の機能
 
 - Prismaスキーマの作成
 - 認証機能の実装（セッションベース）
