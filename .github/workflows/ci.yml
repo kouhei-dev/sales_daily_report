@@ -28,13 +28,8 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      # TODO: ESLintチェックを追加予定
-      # Next.js appディレクトリの基本構築完了後に以下を追加:
-      # - name: Run ESLint
-      #   run: npm run lint
-      # 再追加時は package.json の lint-staged 設定も更新すること:
-      #   "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"]
-      # 現在はESLint設定とNext.js設定の調整が必要なため一時的に無効化
+      - name: Run ESLint
+        run: npm run lint
 
       - name: Run Prettier check
         run: npm run format:check
