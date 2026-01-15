@@ -59,8 +59,8 @@ model DailyReport {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   salesId     String   @map("sales_id") @db.ObjectId
   reportDate  DateTime @map("report_date")
-  problem     String?  @db.String
-  plan        String?  @db.String
+  problem     String?  @db.String // Max 1000 characters (validated at application layer)
+  plan        String?  @db.String // Max 1000 characters (validated at application layer)
   status      ReportStatus @default(DRAFT)
   submittedAt DateTime? @map("submitted_at")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -72,6 +72,8 @@ model DailyReport {
   comments     Comment[]
 
   @@unique([salesId, reportDate], name: "unique_sales_report_date")
+  @@index([reportDate])
+  @@index([status])
   @@map("daily_reports")
 }
 
@@ -81,8 +83,8 @@ model VisitRecord {
   reportId      String   @map("report_id") @db.ObjectId
   customerId    String   @map("customer_id") @db.ObjectId
   visitDatetime DateTime @map("visit_datetime")
-  visitContent  String   @map("visit_content") @db.String
-  visitResult   String?  @map("visit_result") @db.String
+  visitContent  String   @map("visit_content") @db.String // Max 500 characters (validated at application layer)
+  visitResult   String?  @map("visit_result") @db.String // Max 500 characters (validated at application layer)
   displayOrder  Int      @map("display_order")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
@@ -91,6 +93,7 @@ model VisitRecord {
   dailyReport DailyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
   customer    Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
 
+  @@index([visitDatetime])
   @@map("visit_records")
 }
 
@@ -100,7 +103,7 @@ model Comment {
   reportId    String      @map("report_id") @db.ObjectId
   commenterId String      @map("commenter_id") @db.ObjectId
   commentType CommentType @map("comment_type")
-  commentText String      @map("comment_text") @db.String
+  commentText String      @map("comment_text") @db.String // Max 500 characters (validated at application layer)
   isRead      Boolean     @default(false) @map("is_read")
   readAt      DateTime?   @map("read_at")
   createdAt   DateTime    @default(now()) @map("created_at")
