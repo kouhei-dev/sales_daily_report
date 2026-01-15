@@ -1,0 +1,65 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: sales_daily_report_mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    environment:
+      # 本番環境では必ず認証を有効化すること
+      # ローカル開発では認証なしで運用（簡便性のため）
+      MONGO_INITDB_DATABASE: sales_daily_report
+    volumes:
+      # データの永続化（ホストマシンにデータを保存）
+      - mongodb_data:/data/db
+      # MongoDB設定ファイルの永続化
+      - mongodb_config:/data/configdb
+      # 初期化スクリプト（必要に応じて）
+      - ./docker/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - sales_daily_report_network
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    # リソース制限（ローカル開発環境を圧迫しないため）
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # オプション: MongoExpressを使用したGUI管理ツール
+  # 本番環境では使用しないこと
+  mongo-express:
+    image: mongo-express:1.0-20
+    container_name: sales_daily_report_mongo_express
+    restart: unless-stopped
+    ports:
+      - '8081:8081'
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+      ME_CONFIG_BASICAUTH: false
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - sales_daily_report_network
+    profiles:
+      - tools
+
+volumes:
+  # 名前付きボリュームでデータを永続化
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+networks:
+  sales_daily_report_network:
+    driver: bridge
