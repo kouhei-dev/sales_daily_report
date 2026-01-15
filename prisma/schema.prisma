@@ -1,0 +1,129 @@
+// Prisma Schema for Sales Daily Report System
+// MongoDB Database Configuration
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// 営業マスタ
+model Sales {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  salesCode   String   @unique @map("sales_code")
+  salesName   String   @map("sales_name")
+  email       String   @unique
+  passwordHash String  @map("password_hash")
+  department  String
+  managerId   String?  @map("manager_id") @db.ObjectId
+  isManager   Boolean  @default(false) @map("is_manager")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  manager       Sales?        @relation("ManagerSubordinate", fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subordinates  Sales[]       @relation("ManagerSubordinate")
+  customers     Customer[]
+  dailyReports  DailyReport[]
+  comments      Comment[]
+
+  @@map("sales")
+}
+
+// 顧客マスタ
+model Customer {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerCode String   @unique @map("customer_code")
+  customerName String   @map("customer_name")
+  industry     String?
+  postalCode   String?  @map("postal_code")
+  address      String?
+  phone        String?
+  salesId      String   @map("sales_id") @db.ObjectId
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  sales        Sales          @relation(fields: [salesId], references: [id], onDelete: Restrict)
+  visitRecords VisitRecord[]
+
+  @@map("customers")
+}
+
+// 日報
+model DailyReport {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  salesId     String   @map("sales_id") @db.ObjectId
+  reportDate  DateTime @map("report_date")
+  problem     String?  @db.String // Max 1000 characters (validated at application layer)
+  plan        String?  @db.String // Max 1000 characters (validated at application layer)
+  status      ReportStatus @default(DRAFT)
+  submittedAt DateTime? @map("submitted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  sales        Sales          @relation(fields: [salesId], references: [id], onDelete: Restrict)
+  visitRecords VisitRecord[]
+  comments     Comment[]
+
+  @@unique([salesId, reportDate], name: "unique_sales_report_date")
+  @@index([reportDate])
+  @@index([status])
+  @@map("daily_reports")
+}
+
+// 訪問記録
+model VisitRecord {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  reportId      String   @map("report_id") @db.ObjectId
+  customerId    String   @map("customer_id") @db.ObjectId
+  visitDatetime DateTime @map("visit_datetime")
+  visitContent  String   @map("visit_content") @db.String // Max 500 characters (validated at application layer)
+  visitResult   String?  @map("visit_result") @db.String // Max 500 characters (validated at application layer)
+  displayOrder  Int      @map("display_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  dailyReport DailyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  customer    Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([visitDatetime])
+  @@map("visit_records")
+}
+
+// コメント
+model Comment {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  reportId    String      @map("report_id") @db.ObjectId
+  commenterId String      @map("commenter_id") @db.ObjectId
+  commentType CommentType @map("comment_type")
+  commentText String      @map("comment_text") @db.String // Max 500 characters (validated at application layer)
+  isRead      Boolean     @default(false) @map("is_read")
+  readAt      DateTime?   @map("read_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  dailyReport DailyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  commenter   Sales       @relation(fields: [commenterId], references: [id], onDelete: Restrict)
+
+  @@map("comments")
+}
+
+// Enums
+enum ReportStatus {
+  DRAFT     @map("draft")
+  SUBMITTED @map("submitted")
+  COMMENTED @map("commented")
+}
+
+enum CommentType {
+  PROBLEM @map("problem")
+  PLAN    @map("plan")
+}
