@@ -107,6 +107,18 @@ sales_daily_report/
 └── package.json                # 依存関係
 ```
 
+## 開発の進め方
+
+新たな実装を開始する際はgit worktreeを使って新しいサブディレクトリとブランチを作成してください。
+
+サブディレクトリ名は `issue-***` のような命名規則としてください。
+
+issue #2 に対する実装を開始する場合の例
+
+```
+git worktree add -b feature-XXXX ./issue-2
+```
+
 ## コーディング規約
 
 ### TypeScript
