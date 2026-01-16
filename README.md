@@ -35,13 +35,16 @@ cd sales_daily_report
 # 依存パッケージのインストール
 npm install
 
+# Gitフック（husky）の設定
+# ※git worktree環境では必須
+git config core.hooksPath .husky
+
 # 環境変数の設定
 cp .env.example .env.local
 # .env.local を編集して必要な環境変数を設定
 
-# Prismaのセットアップ
-npx prisma generate
-npx prisma db push
+# データベースのセットアップ（ワンコマンド）
+npm run db:setup
 
 # 開発サーバーの起動
 npm run dev
@@ -49,7 +52,20 @@ npm run dev
 
 http://localhost:3000 でアプリケーションにアクセスできます。
 
+#### 📌 重要: git worktree環境について
+
+このプロジェクトは`git worktree`を使用した開発を推奨しています。各worktreeで以下のコマンドを実行してください：
+
+```bash
+# Gitフックを有効化（各worktreeで実行）
+git config core.hooksPath .husky
+```
+
+これにより、コミット前のLintチェック、フォーマットチェックが自動実行されます。
+
 ## 🛠️ 開発コマンド
+
+### アプリケーション
 
 ```bash
 # 開発サーバー起動
@@ -79,6 +95,39 @@ npm run build
 # 本番サーバー起動
 npm run start
 ```
+
+### データベース管理
+
+```bash
+# MongoDB起動
+npm run db:up
+
+# MongoDB停止
+npm run db:down
+
+# データベース接続テスト
+npm run db:test
+
+# Prismaスキーマを反映
+npm run db:push
+
+# ワンコマンドセットアップ
+npm run db:setup
+
+# MongoDBログを表示
+npm run db:logs
+
+# データベース完全削除（注意）
+npm run db:clean
+
+# Prisma Studio（GUI管理ツール）
+npm run prisma:studio
+
+# 開発用GUI（Mongo Express）
+npm run db:tools
+```
+
+詳細なデータベース管理については [データベースセットアップガイド](./docs/DATABASE_SETUP.md) を参照してください.
 
 ## 🧪 テスト
 
