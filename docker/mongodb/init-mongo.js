@@ -10,13 +10,7 @@ db = db.getSiblingDB('sales_daily_report');
 print('Initializing sales_daily_report database...');
 
 // 各コレクションを作成（存在しない場合のみ）
-const collections = [
-  'sales',
-  'customers',
-  'daily_reports',
-  'visit_records',
-  'comments',
-];
+const collections = ['sales', 'customers', 'daily_reports', 'visit_records', 'comments'];
 
 collections.forEach((collectionName) => {
   if (!db.getCollectionNames().includes(collectionName)) {

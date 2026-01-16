@@ -50,20 +50,14 @@ function displayTroubleshootingGuide(error: Error): void {
     console.error('     $ npm run db:up');
     console.error('\n  3. 接続文字列が正しいか確認してください:');
     console.error('     .env.local ファイルの DATABASE_URL を確認');
-  } else if (
-    error.message.includes('Authentication failed') ||
-    error.message.includes('auth')
-  ) {
+  } else if (error.message.includes('Authentication failed') || error.message.includes('auth')) {
     console.error('🔍 原因: 認証に失敗しました\n');
     console.error('📝 解決方法:');
     console.error('  1. ユーザー名とパスワードが正しいか確認してください');
     console.error('  2. MongoDB Atlas の場合:');
     console.error('     - IPアドレスがホワイトリストに追加されているか確認');
     console.error('     - ユーザーに適切な権限が付与されているか確認');
-  } else if (
-    error.message.includes('getaddrinfo') ||
-    error.message.includes('ENOTFOUND')
-  ) {
+  } else if (error.message.includes('getaddrinfo') || error.message.includes('ENOTFOUND')) {
     console.error('🔍 原因: ホスト名が解決できません\n');
     console.error('📝 解決方法:');
     console.error('  1. ネットワーク接続を確認してください');
@@ -84,7 +78,9 @@ function displayTroubleshootingGuide(error: Error): void {
     console.error('     $ cp .env.example .env.local');
     console.error('\n  2. DATABASE_URL を設定してください');
     console.error('     ローカル: DATABASE_URL="mongodb://localhost:27017/sales_daily_report"');
-    console.error('     Atlas: DATABASE_URL="mongodb+srv://user:pass@cluster.mongodb.net/sales_daily_report"');
+    console.error(
+      '     Atlas: DATABASE_URL="mongodb+srv://user:pass@cluster.mongodb.net/sales_daily_report"'
+    );
   } else {
     console.error('🔍 その他のエラーが発生しました\n');
     console.error('📝 一般的な解決方法:');
@@ -117,10 +113,7 @@ async function testDatabaseConnection(): Promise<ConnectionTestResult> {
     }
 
     // セキュリティ: URLからパスワードを隠してログに表示
-    const sanitizedUrl = databaseUrl.replace(
-      /\/\/([^:]+):([^@]+)@/,
-      '//$1:****@',
-    );
+    const sanitizedUrl = databaseUrl.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@');
     console.log(`📝 接続先: ${sanitizedUrl}\n`);
 
     // 接続テスト: シンプルなクエリを実行
@@ -159,9 +152,7 @@ async function testDatabaseConnection(): Promise<ConnectionTestResult> {
       Array.isArray(collections.cursor.firstBatch)
         ? collections.cursor.firstBatch
             .map((col) =>
-              typeof col === 'object' && col !== null && 'name' in col
-                ? String(col.name)
-                : null,
+              typeof col === 'object' && col !== null && 'name' in col ? String(col.name) : null
             )
             .filter((name): name is string => name !== null)
         : [];
@@ -189,8 +180,7 @@ async function testDatabaseConnection(): Promise<ConnectionTestResult> {
       },
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
 
     if (error instanceof Error) {
