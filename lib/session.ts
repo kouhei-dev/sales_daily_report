@@ -13,6 +13,45 @@ const SESSION_TIMEOUT_MINUTES = 30;
 export const SESSION_TIMEOUT_SECONDS = SESSION_TIMEOUT_MINUTES * 60;
 
 /**
+ * セッションシークレットを取得・検証する
+ *
+ * セキュリティ考慮事項:
+ * - 本番環境では必ずSESSION_SECRET環境変数を設定すること
+ * - シークレットは32文字以上の強力なランダム文字列を使用
+ * - 開発環境でのみデフォルト値を許可
+ *
+ * @returns セッションシークレット
+ * @throws 本番環境でSESSION_SECRETが未設定の場合
+ * @throws シークレットが32文字未満の場合
+ */
+function getSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // 本番環境でSESSION_SECRETが未設定の場合はエラー
+  if (isProduction && !secret) {
+    throw new Error(
+      'SESSION_SECRET environment variable must be set in production. ' +
+        'Generate a strong random string with at least 32 characters.'
+    );
+  }
+
+  // SESSION_SECRETが設定されている場合は長さをチェック
+  if (secret) {
+    if (secret.length < 32) {
+      throw new Error(
+        `SESSION_SECRET must be at least 32 characters long. Current length: ${secret.length}. ` +
+          'Generate a strong random string for production use.'
+      );
+    }
+    return secret;
+  }
+
+  // 開発環境でのみデフォルト値を返す
+  return 'complex_password_at_least_32_characters_long_for_development';
+}
+
+/**
  * セッション設定
  *
  * セキュリティ考慮事項:
@@ -26,8 +65,7 @@ export const SESSION_TIMEOUT_SECONDS = SESSION_TIMEOUT_MINUTES * 60;
  */
 export const sessionOptions: SessionOptions = {
   cookieName: 'sales_daily_report_session',
-  password:
-    process.env.SESSION_SECRET || 'complex_password_at_least_32_characters_long_for_development',
+  password: getSessionSecret(),
   cookieOptions: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,

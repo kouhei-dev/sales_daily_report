@@ -20,27 +20,41 @@ const loginRateLimiter = new RateLimiterMemory({
 /**
  * IPアドレスを取得する
  *
+ * セキュリティ考慮事項:
+ * - X-Forwarded-Forヘッダーは容易に偽装可能なため、信頼できるプロキシからのリクエストのみで使用
+ * - TRUST_PROXY環境変数がtrueの場合のみ、X-Forwarded-Forを信頼
+ * - プロキシチェーン内の最も信頼できるIP（最後のIP）を使用
+ *
  * 優先順位:
- * 1. X-Forwarded-For ヘッダー（プロキシ経由の場合）
- * 2. X-Real-IP ヘッダー
+ * 1. X-Forwarded-For ヘッダー（TRUST_PROXY=trueの場合のみ）
+ * 2. X-Real-IP ヘッダー（TRUST_PROXY=trueの場合のみ）
  * 3. 'unknown'（取得できない場合）
  *
  * @param request - Next.js Request オブジェクト
  * @returns IPアドレス
  */
 export function getClientIp(request: Request): string {
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    // X-Forwarded-Forには複数のIPが含まれる可能性があるため、最初のIPを取得
-    return forwardedFor.split(',')[0].trim();
+  // 環境変数で信頼できるプロキシを設定
+  // Cloud Run、Vercel、AWS ALB等の環境では'true'に設定
+  const trustProxy = process.env.TRUST_PROXY === 'true';
+
+  if (trustProxy) {
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    if (forwardedFor) {
+      // プロキシチェーン内の最も信頼できるIP（最後のIP）を取得
+      // Cloud Runなどでは、最後のIPがクライアントの実際のIPアドレス
+      const ips = forwardedFor.split(',').map((ip) => ip.trim());
+      return ips[ips.length - 1] || 'unknown';
+    }
+
+    const realIp = request.headers.get('x-real-ip');
+    if (realIp) {
+      return realIp.trim();
+    }
   }
 
-  const realIp = request.headers.get('x-real-ip');
-  if (realIp) {
-    return realIp;
-  }
-
-  // IPが取得できない場合はunknownを返す
+  // プロキシを信頼しない場合、またはIPが取得できない場合はunknownを返す
+  // この場合、セッション単位やアカウント単位のレート制限も併用すべき
   return 'unknown';
 }
 

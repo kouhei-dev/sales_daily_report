@@ -82,7 +82,19 @@ describe('rate-limiter', () => {
   });
 
   describe('getClientIp', () => {
-    it('X-Forwarded-ForヘッダーからIPを取得できる', () => {
+    const originalTrustProxy = process.env.TRUST_PROXY;
+
+    beforeEach(() => {
+      // TRUST_PROXY環境変数を設定してプロキシヘッダーを信頼する
+      process.env.TRUST_PROXY = 'true';
+    });
+
+    afterEach(() => {
+      // テスト後に元の値に戻す
+      process.env.TRUST_PROXY = originalTrustProxy;
+    });
+
+    it('X-Forwarded-ForヘッダーからIPを取得できる（最後のIPを返す）', () => {
       const request = new Request('http://localhost', {
         headers: {
           'x-forwarded-for': '203.0.113.1, 198.51.100.1',
@@ -90,7 +102,8 @@ describe('rate-limiter', () => {
       });
 
       const ip = getClientIp(request);
-      expect(ip).toBe('203.0.113.1');
+      // セキュリティ上、最後のIP（最も信頼できるプロキシに近いIP）を返す
+      expect(ip).toBe('198.51.100.1');
     });
 
     it('X-Real-IPヘッダーからIPを取得できる', () => {
@@ -123,7 +136,7 @@ describe('rate-limiter', () => {
       expect(ip).toBe('unknown');
     });
 
-    it('X-Forwarded-Forに複数のIPがある場合、最初のIPを返す', () => {
+    it('X-Forwarded-Forに複数のIPがある場合、最後のIPを返す', () => {
       const request = new Request('http://localhost', {
         headers: {
           'x-forwarded-for': '203.0.113.1, 198.51.100.1, 192.168.1.1',
@@ -131,7 +144,8 @@ describe('rate-limiter', () => {
       });
 
       const ip = getClientIp(request);
-      expect(ip).toBe('203.0.113.1');
+      // セキュリティ上、最後のIP（最も信頼できるプロキシに近いIP）を返す
+      expect(ip).toBe('192.168.1.1');
     });
 
     it('X-Forwarded-ForのIPにスペースがある場合、トリムされる', () => {
@@ -142,7 +156,23 @@ describe('rate-limiter', () => {
       });
 
       const ip = getClientIp(request);
-      expect(ip).toBe('203.0.113.1');
+      // セキュリティ上、最後のIP（最も信頼できるプロキシに近いIP）を返す
+      expect(ip).toBe('198.51.100.1');
+    });
+
+    it('TRUST_PROXYがfalseの場合はunknownを返す', () => {
+      process.env.TRUST_PROXY = 'false';
+
+      const request = new Request('http://localhost', {
+        headers: {
+          'x-forwarded-for': '203.0.113.1',
+          'x-real-ip': '203.0.113.2',
+        },
+      });
+
+      const ip = getClientIp(request);
+      // プロキシを信頼しない場合はヘッダーを読まない
+      expect(ip).toBe('unknown');
     });
   });
 });

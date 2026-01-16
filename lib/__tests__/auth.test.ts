@@ -50,31 +50,45 @@ describe('auth utility', () => {
 
   describe('validatePassword', () => {
     it('有効なパスワードが検証を通過する', () => {
-      const result = validatePassword('Password123');
+      const result = validatePassword('Password123!');
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
-    it('8文字未満のパスワードがエラーになる', () => {
-      const result = validatePassword('Pass1');
+    it('10文字未満のパスワードがエラーになる', () => {
+      const result = validatePassword('Pass1!');
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('パスワードは8文字以上である必要があります');
+      expect(result.errors).toContain('パスワードは10文字以上である必要があります');
     });
 
-    it('英字が含まれていないパスワードがエラーになる', () => {
-      const result = validatePassword('12345678');
+    it('大文字が含まれていないパスワードがエラーになる', () => {
+      const result = validatePassword('password123!');
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('パスワードには英字を含める必要があります');
+      expect(result.errors).toContain('パスワードには大文字(A-Z)を含める必要があります');
+    });
+
+    it('小文字が含まれていないパスワードがエラーになる', () => {
+      const result = validatePassword('PASSWORD123!');
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('パスワードには小文字(a-z)を含める必要があります');
     });
 
     it('数字が含まれていないパスワードがエラーになる', () => {
-      const result = validatePassword('Password');
+      const result = validatePassword('Password!@#');
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('パスワードには数字を含める必要があります');
+      expect(result.errors).toContain('パスワードには数字(0-9)を含める必要があります');
+    });
+
+    it('特殊文字が含まれていないパスワードがエラーになる', () => {
+      const result = validatePassword('Password123');
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('パスワードには特殊文字(!@#$%^&*など)を含める必要があります');
     });
 
     it('空のパスワードが全てのエラーを返す', () => {
@@ -82,28 +96,39 @@ describe('auth utility', () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
-      expect(result.errors).toContain('パスワードは8文字以上である必要があります');
+      expect(result.errors).toContain('パスワードは10文字以上である必要があります');
     });
 
-    it('英大文字のみでも有効', () => {
-      const result = validatePassword('PASSWORD123');
+    it('全ての条件を満たすパスワードは有効', () => {
+      const result = validatePassword('MyP@ssw0rd!');
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
-    it('英小文字のみでも有効', () => {
-      const result = validatePassword('password123');
-
-      expect(result.valid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-    });
-
-    it('特殊文字を含むパスワードも有効', () => {
+    it('特殊文字を含む複雑なパスワードも有効', () => {
       const result = validatePassword('Pass@word123!');
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
+    });
+
+    it('様々な特殊文字を受け入れる', () => {
+      const passwords = [
+        'Password1!',
+        'Password1@',
+        'Password1#',
+        'Password1$',
+        'Password1%',
+        'Password1^',
+        'Password1&',
+        'Password1*',
+      ];
+
+      passwords.forEach((password) => {
+        const result = validatePassword(password);
+        expect(result.valid).toBe(true);
+      });
     });
   });
 });
