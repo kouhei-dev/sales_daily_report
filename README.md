@@ -39,9 +39,8 @@ npm install
 cp .env.example .env.local
 # .env.local を編集して必要な環境変数を設定
 
-# Prismaのセットアップ
-npx prisma generate
-npx prisma db push
+# データベースのセットアップ（ワンコマンド）
+npm run db:setup
 
 # 開発サーバーの起動
 npm run dev
