@@ -35,6 +35,10 @@ cd sales_daily_report
 # 依存パッケージのインストール
 npm install
 
+# Gitフック（husky）の設定
+# ※git worktree環境では必須
+git config core.hooksPath .husky
+
 # 環境変数の設定
 cp .env.example .env.local
 # .env.local を編集して必要な環境変数を設定
@@ -47,6 +51,17 @@ npm run dev
 ```
 
 http://localhost:3000 でアプリケーションにアクセスできます。
+
+#### 📌 重要: git worktree環境について
+
+このプロジェクトは`git worktree`を使用した開発を推奨しています。各worktreeで以下のコマンドを実行してください：
+
+```bash
+# Gitフックを有効化（各worktreeで実行）
+git config core.hooksPath .husky
+```
+
+これにより、コミット前のLintチェック、フォーマットチェックが自動実行されます。
 
 ## 🛠️ 開発コマンド
 
