@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { checkLoginRateLimit, resetLoginRateLimit, getClientIp } from '../rate-limiter';
 
 describe('rate-limiter', () => {
