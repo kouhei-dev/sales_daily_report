@@ -211,7 +211,7 @@ describe('Table', () => {
   });
 
   test('rowSpan属性が正しく適用される', () => {
-    const { container } = render(
+    render(
       <Table>
         <TableBody>
           <TableRow>

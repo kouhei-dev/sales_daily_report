@@ -156,7 +156,9 @@ describe('Alert', () => {
     const alert = screen.getByRole('alert');
     expect(alert).toHaveClass('bg-red-50');
     expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
-    expect(screen.getByText('入力内容に誤りがあります。もう一度確認してください。')).toBeInTheDocument();
+    expect(
+      screen.getByText('入力内容に誤りがあります。もう一度確認してください。')
+    ).toBeInTheDocument();
   });
 
   test('実際のユースケース: 警告メッセージ', () => {
