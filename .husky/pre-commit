@@ -1,1 +1,6 @@
+# Type check
+echo "Running type check..."
+npm run type-check || exit 1
+
+# Lint and format staged files
 npx lint-staged

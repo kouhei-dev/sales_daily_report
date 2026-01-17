@@ -286,8 +286,30 @@ gcloud run services update sales-daily-report \
 DATABASE_URL=mongodb+srv://user:password@cluster.mongodb.net/sales_daily_report,\
 SESSION_SECRET=your-production-session-secret,\
 NEXT_PUBLIC_APP_URL=https://sales-daily-report-xxxxx-an.a.run.app,\
-NODE_ENV=production"
+NODE_ENV=production,\
+TRUST_PROXY=true"
 ```
+
+#### 環境変数の詳細
+
+| 環境変数              | 必須 | 説明                                     | 設定例                 |
+| --------------------- | ---- | ---------------------------------------- | ---------------------- |
+| `DATABASE_URL`        | ✅   | MongoDB Atlas接続文字列                  | `mongodb+srv://...`    |
+| `SESSION_SECRET`      | ✅   | セッション暗号化用の秘密鍵（32文字以上） | ランダムな文字列       |
+| `NEXT_PUBLIC_APP_URL` | ✅   | アプリケーションの公開URL                | Cloud RunのURL         |
+| `NODE_ENV`            | ✅   | 実行環境                                 | `production`           |
+| `TRUST_PROXY`         | ✅   | プロキシヘッダーの信頼設定               | `true` (Cloud Run環境) |
+
+**TRUST_PROXY環境変数について**
+
+Cloud RunやVercel、AWS ALBなどのリバースプロキシ環境では、`TRUST_PROXY=true` に設定する必要があります。
+
+- **目的**: レート制限やIPベースのアクセス制御で実際のクライアントIPアドレスを取得
+- **動作**: `X-Forwarded-For` および `X-Real-IP` ヘッダーを信頼し、プロキシチェーン内の最後のIPを取得
+- **セキュリティ**: 信頼できるプロキシ環境でのみ有効化してください
+  - Cloud Run、Vercel、AWS ALB など: `true` に設定
+  - 直接インターネットに公開する場合: `false` または未設定
+- **リスク**: 信頼できないプロキシ環境で有効化すると、IPスプーフィング攻撃のリスクがあります
 
 ### Secret Managerを使用（推奨）
 
