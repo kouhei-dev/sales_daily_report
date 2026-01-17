@@ -292,9 +292,10 @@ npm run db:logs
 
 **解決方法**:
 
-1. ネットワーク接続を確認
-2. MongoDB Atlasの場合、Network Access設定を確認
-3. Firewallでポート27017がブロックされていないか確認
+1. dockerを再起動。 npm run db:down && npm run db:up
+2. ネットワーク接続を確認
+3. MongoDB Atlasの場合、Network Access設定を確認
+4. Firewallでポート27017がブロックされていないか確認
 
 ### Prismaクライアントが見つからない
 
