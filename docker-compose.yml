@@ -9,6 +9,7 @@ services:
       # 本番環境では必ず認証を有効化すること
       # ローカル開発では認証なしで運用（簡便性のため）
       MONGO_INITDB_DATABASE: sales_daily_report
+    command: ['--replSet', 'rs0', '--bind_ip_all']
     volumes:
       # データの永続化（ホストマシンにデータを保存）
       - mongodb_data:/data/db
@@ -16,6 +17,8 @@ services:
       - mongodb_config:/data/configdb
       # 初期化スクリプト（必要に応じて）
       - ./docker/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      # レプリカセット初期化スクリプト
+      - ./docker/mongodb/init-replica.sh:/docker-entrypoint-initdb.d/init-replica.sh:ro
     networks:
       - sales_daily_report_network
     healthcheck:
