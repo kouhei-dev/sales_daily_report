@@ -3,9 +3,10 @@ import type { NextRequest } from 'next/server';
 import { getSession, isSessionValid } from '@/lib/session';
 
 /**
- * Next.js Middleware
+ * Next.js Proxy (Next.js 16+)
  *
  * ルート保護とリダイレクト処理を行う
+ * 注: Next.js 16では middleware から proxy にリネームされました
  *
  * 機能:
  * - ログインページ: 認証済みユーザーをホームへリダイレクト
@@ -17,7 +18,7 @@ import { getSession, isSessionValid } from '@/lib/session';
  * - /_next (Next.jsの内部ファイル)
  * - /favicon.ico (ファビコン)
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // セッション取得
@@ -51,9 +52,9 @@ export async function middleware(request: NextRequest) {
 }
 
 /**
- * Middleware設定
+ * Proxy設定
  *
- * matcher: ミドルウェアを適用するパスパターン
+ * matcher: Proxyを適用するパスパターン
  * - /api, /_next/static, /_next/image, /favicon.ico を除外
  */
 export const config = {
