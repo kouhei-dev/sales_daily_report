@@ -67,9 +67,10 @@ function displayTroubleshootingGuide(error: Error): void {
   } else if (error.message.includes('timeout')) {
     console.error('🔍 原因: 接続タイムアウトが発生しました\n');
     console.error('📝 解決方法:');
-    console.error('  1. ネットワーク接続が安定しているか確認');
-    console.error('  2. ファイアウォール設定を確認');
-    console.error('  3. MongoDB Atlas の場合:');
+    console.error('  1. dockerを再起動。 npm run db:down && npm run db:up');
+    console.error('  2. ネットワーク接続が安定しているか確認');
+    console.error('  3. ファイアウォール設定を確認');
+    console.error('  4. MongoDB Atlas の場合:');
     console.error('     - ネットワークアクセス設定を確認');
   } else if (!process.env.DATABASE_URL) {
     console.error('🔍 原因: DATABASE_URL環境変数が設定されていません\n');
