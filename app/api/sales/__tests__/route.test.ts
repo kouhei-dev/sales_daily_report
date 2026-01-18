@@ -35,27 +35,50 @@ vi.mock('@/lib/auth', () => ({
   hashPassword: vi.fn(),
 }));
 
+// テスト用のヘルパー関数
+const mockManagerAuth = async () => {
+  const { requireManager } = await import('@/lib/middleware/auth');
+  vi.mocked(requireManager).mockResolvedValue({
+    session: {
+      salesId: 'manager-id-1',
+      salesCode: 'M001',
+      salesName: '山田太郎',
+      email: 'yamada@example.com',
+      department: '営業部',
+      isManager: true,
+      expiresAt: Date.now() + 30 * 60 * 1000,
+    },
+    error: null,
+  } as any);
+};
+
+const mockNonManagerAuth = async () => {
+  const { requireManager } = await import('@/lib/middleware/auth');
+  const errorResponse = {
+    status: 'error',
+    error: {
+      code: 'AUTH_FORBIDDEN',
+      message: '権限がありません',
+    },
+  };
+
+  vi.mocked(requireManager).mockResolvedValue({
+    session: null,
+    error: true,
+    response: {
+      json: () => Promise.resolve(errorResponse),
+      status: 403,
+    } as any,
+  });
+};
+
 describe('GET /api/sales', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('管理者は営業一覧を取得できる', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    // モックの設定
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: 'manager-id-1',
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     mockSalesCount.mockResolvedValue(2);
     mockSalesFindMany.mockResolvedValue([
@@ -103,20 +126,7 @@ describe('GET /api/sales', () => {
   });
 
   it('クエリパラメータでフィルタリングできる', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: 'manager-id-1',
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     mockSalesCount.mockResolvedValue(1);
     mockSalesFindMany.mockResolvedValue([
@@ -155,24 +165,7 @@ describe('GET /api/sales', () => {
   });
 
   it('管理者以外はアクセス拒否される', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    const errorResponse = {
-      status: 'error',
-      error: {
-        code: 'AUTH_FORBIDDEN',
-        message: '権限がありません',
-      },
-    };
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: null,
-      error: true,
-      response: {
-        json: () => Promise.resolve(errorResponse),
-        status: 403,
-      } as any,
-    });
+    await mockNonManagerAuth();
 
     const request = new NextRequest('http://localhost/api/sales');
 
@@ -182,20 +175,7 @@ describe('GET /api/sales', () => {
   });
 
   it('無効なページ番号の場合、バリデーションエラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: 'manager-id-1',
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     const request = new NextRequest('http://localhost/api/sales?page=0');
 
@@ -214,21 +194,8 @@ describe('POST /api/sales', () => {
   });
 
   it('管理者は営業を作成できる', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
+    await mockManagerAuth();
     const { hashPassword } = await import('@/lib/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: 'manager-id-1',
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
 
     const validManagerId = '507f1f77bcf86cd799439011'; // Valid MongoDB ObjectId
 
@@ -290,20 +257,7 @@ describe('POST /api/sales', () => {
   });
 
   it('営業コードが重複している場合、409エラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: 'manager-id-1',
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     // 営業コードが重複
     mockSalesFindUnique.mockResolvedValueOnce({
@@ -333,20 +287,7 @@ describe('POST /api/sales', () => {
   });
 
   it('メールアドレスが重複している場合、409エラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: 'manager-id-1',
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     // 営業コードは重複していない
     mockSalesFindUnique.mockResolvedValueOnce(null);
@@ -378,20 +319,7 @@ describe('POST /api/sales', () => {
   });
 
   it('パスワードが要件を満たさない場合、バリデーションエラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: 'manager-id-1',
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     const request = new NextRequest('http://localhost/api/sales', {
       method: 'POST',
@@ -414,20 +342,7 @@ describe('POST /api/sales', () => {
   });
 
   it('必須フィールドが欠けている場合、バリデーションエラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: 'manager-id-1',
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     const request = new NextRequest('http://localhost/api/sales', {
       method: 'POST',
@@ -450,20 +365,7 @@ describe('POST /api/sales', () => {
   });
 
   it('存在しない上司IDを指定した場合、エラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: 'manager-id-1',
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     // 営業コードとメールアドレスは重複していない
     mockSalesFindUnique.mockResolvedValueOnce(null);
@@ -501,20 +403,7 @@ describe('POST /api/sales', () => {
   });
 
   it('管理者ではない営業を上司に指定した場合、エラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: 'manager-id-1',
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     // 営業コードとメールアドレスは重複していない
     mockSalesFindUnique.mockResolvedValueOnce(null);

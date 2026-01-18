@@ -47,26 +47,59 @@ vi.mock('@/lib/auth', () => ({
   hashPassword: vi.fn(),
 }));
 
+// テスト用のヘルパー関数
+const mockManagerAuth = async () => {
+  const { requireManager } = await import('@/lib/middleware/auth');
+  vi.mocked(requireManager).mockResolvedValue({
+    session: {
+      salesId: VALID_MANAGER_ID,
+      salesCode: 'M001',
+      salesName: '山田太郎',
+      email: 'yamada@example.com',
+      department: '営業部',
+      isManager: true,
+      expiresAt: Date.now() + 30 * 60 * 1000,
+    },
+    error: null,
+  } as any);
+};
+
+const mockNonManagerAuth = async () => {
+  const { requireManager } = await import('@/lib/middleware/auth');
+  const errorResponse = {
+    status: 'error',
+    error: {
+      code: 'AUTH_FORBIDDEN',
+      message: '権限がありません',
+    },
+  };
+
+  vi.mocked(requireManager).mockResolvedValue({
+    session: null,
+    error: true,
+    response: {
+      json: () => Promise.resolve(errorResponse),
+      status: 403,
+    } as any,
+  });
+};
+
+const resetAllMocks = () => {
+  vi.clearAllMocks();
+  mockSalesFindUnique.mockReset();
+  mockSalesUpdate.mockReset();
+  mockSalesDelete.mockReset();
+  mockDailyReportCount.mockReset();
+  mockCustomerCount.mockReset();
+};
+
 describe('GET /api/sales/:id', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetAllMocks();
   });
 
   it('管理者は営業詳細を取得できる', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     mockSalesFindUnique.mockResolvedValue({
       id: VALID_SALES_ID,
@@ -98,20 +131,7 @@ describe('GET /api/sales/:id', () => {
   });
 
   it('存在しない営業IDの場合、404エラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     mockSalesFindUnique.mockResolvedValue(null);
 
@@ -127,20 +147,7 @@ describe('GET /api/sales/:id', () => {
   });
 
   it('無効な営業IDフォーマットの場合、400エラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     const request = new NextRequest('http://localhost/api/sales/invalid-id');
     const params = Promise.resolve({ id: 'invalid-id' });
@@ -152,32 +159,27 @@ describe('GET /api/sales/:id', () => {
     expect(data.status).toBe('error');
     expect(data.error.code).toBe('VALIDATION_ERROR');
   });
+
+  it('管理者以外はアクセス拒否される', async () => {
+    await mockNonManagerAuth();
+
+    const request = new NextRequest(`http://localhost/api/sales/${VALID_SALES_ID}`);
+    const params = Promise.resolve({ id: VALID_SALES_ID });
+
+    const response = await GET(request, { params });
+
+    expect(response.status).toBe(403);
+  });
 });
 
 describe('PUT /api/sales/:id', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    // モック関数をリセット
-    mockSalesFindUnique.mockReset();
-    mockSalesUpdate.mockReset();
+    resetAllMocks();
   });
 
   it('管理者は営業情報を更新できる', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
+    await mockManagerAuth();
     const { hashPassword } = await import('@/lib/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
 
     // 既存の営業データ
     mockSalesFindUnique.mockResolvedValueOnce({
@@ -247,20 +249,7 @@ describe('PUT /api/sales/:id', () => {
   });
 
   it('パスワードを省略した場合、パスワードは更新されない', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     mockSalesFindUnique.mockResolvedValueOnce({
       id: VALID_SALES_ID,
@@ -306,20 +295,7 @@ describe('PUT /api/sales/:id', () => {
   });
 
   it('メールアドレスが重複している場合、409エラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     // 営業の存在確認
     mockSalesFindUnique.mockResolvedValueOnce({
@@ -357,20 +333,7 @@ describe('PUT /api/sales/:id', () => {
   });
 
   it('管理者ではない営業を上司に指定した場合、エラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     // 既存の営業データ
     mockSalesFindUnique.mockResolvedValueOnce({
@@ -419,33 +382,34 @@ describe('PUT /api/sales/:id', () => {
       ])
     );
   });
+
+  it('管理者以外はアクセス拒否される', async () => {
+    await mockNonManagerAuth();
+
+    const request = new NextRequest(`http://localhost/api/sales/${VALID_SALES_ID}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        sales_name: '佐藤花子',
+        email: 'sato@example.com',
+        department: '営業1課',
+        is_manager: false,
+      }),
+    });
+    const params = Promise.resolve({ id: VALID_SALES_ID });
+
+    const response = await PUT(request, { params });
+
+    expect(response.status).toBe(403);
+  });
 });
 
 describe('DELETE /api/sales/:id', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    // モック関数をリセット
-    mockSalesFindUnique.mockReset();
-    mockSalesDelete.mockReset();
-    mockDailyReportCount.mockReset();
-    mockCustomerCount.mockReset();
+    resetAllMocks();
   });
 
   it('管理者は使用されていない営業を削除できる', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     mockSalesFindUnique.mockResolvedValue({
       id: VALID_SALES_ID,
@@ -473,20 +437,7 @@ describe('DELETE /api/sales/:id', () => {
   });
 
   it('日報で使用されている営業は削除できない', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     // 営業の存在確認
     mockSalesFindUnique.mockResolvedValue({
@@ -513,20 +464,7 @@ describe('DELETE /api/sales/:id', () => {
   });
 
   it('顧客で使用されている営業は削除できない', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     mockSalesFindUnique.mockResolvedValue({
       id: VALID_SALES_ID,
@@ -554,20 +492,7 @@ describe('DELETE /api/sales/:id', () => {
   });
 
   it('存在しない営業を削除しようとした場合、404エラーを返す', async () => {
-    const { requireManager } = await import('@/lib/middleware/auth');
-
-    vi.mocked(requireManager).mockResolvedValue({
-      session: {
-        salesId: VALID_MANAGER_ID,
-        salesCode: 'M001',
-        salesName: '山田太郎',
-        email: 'yamada@example.com',
-        department: '営業部',
-        isManager: true,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      },
-      error: null,
-    } as any);
+    await mockManagerAuth();
 
     mockSalesFindUnique.mockResolvedValue(null);
 
@@ -582,5 +507,18 @@ describe('DELETE /api/sales/:id', () => {
     expect(response.status).toBe(404);
     expect(data.status).toBe('error');
     expect(data.error.code).toBe('RESOURCE_NOT_FOUND');
+  });
+
+  it('管理者以外はアクセス拒否される', async () => {
+    await mockNonManagerAuth();
+
+    const request = new NextRequest(`http://localhost/api/sales/${VALID_SALES_ID}`, {
+      method: 'DELETE',
+    });
+    const params = Promise.resolve({ id: VALID_SALES_ID });
+
+    const response = await DELETE(request, { params });
+
+    expect(response.status).toBe(403);
   });
 });
