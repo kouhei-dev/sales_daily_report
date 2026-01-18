@@ -11,6 +11,16 @@ vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(),
 }));
 
+// usePaginationフックのモック
+vi.mock('@/hooks/usePagination', () => ({
+  usePagination: vi.fn(() => ({
+    goToPage: vi.fn(),
+    goToPreviousPage: vi.fn(),
+    goToNextPage: vi.fn(),
+    currentPage: 1,
+  })),
+}));
+
 // グローバルfetchのモック
 global.fetch = vi.fn();
 

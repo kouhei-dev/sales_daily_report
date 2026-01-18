@@ -1,32 +1,48 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 
-interface PaginationProps {
+export interface PaginationProps {
+  /** 現在のページ番号（1始まり） */
   currentPage: number;
+  /** 総ページ数 */
   totalPages: number;
+  /** 総アイテム数 */
   totalItems: number;
+  /** ページ変更時のハンドラー */
+  onPageChange: (page: number) => void;
+  /** 1ページあたりの表示件数（デフォルト: DEFAULT_PAGE_SIZE） */
+  pageSize?: number;
 }
 
 /**
- * ページネーションコンポーネント
+ * 汎用ページネーションコンポーネント
  *
  * 機能:
  * - 前ページ・次ページへの移動
- * - ページ番号の表示
- * - 総件数の表示
+ * - ページ番号の表示（省略記号付き）
+ * - 総件数と現在の表示範囲の表示
+ *
+ * @example
+ * ```tsx
+ * const { goToPage, currentPage } = usePagination({ basePath: '/sales' });
+ *
+ * <Pagination
+ *   currentPage={currentPage}
+ *   totalPages={10}
+ *   totalItems={200}
+ *   onPageChange={goToPage}
+ * />
+ * ```
  */
-export function Pagination({ currentPage, totalPages, totalItems }: PaginationProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('page', newPage.toString());
-    router.push(`/sales?${params.toString()}`);
-  };
-
+export function Pagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  onPageChange,
+  pageSize = DEFAULT_PAGE_SIZE,
+}: PaginationProps) {
   if (totalPages <= 1) {
     return null;
   }
@@ -66,18 +82,21 @@ export function Pagination({ currentPage, totalPages, totalItems }: PaginationPr
 
   const pageNumbers = getPageNumbers();
 
+  // 現在の表示範囲を計算
+  const startItem = Math.min((currentPage - 1) * pageSize + 1, totalItems);
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
   return (
     <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
       <div className="text-sm text-gray-600">
-        全 {totalItems} 件中 {Math.min((currentPage - 1) * 20 + 1, totalItems)} -{' '}
-        {Math.min(currentPage * 20, totalItems)} 件を表示
+        全 {totalItems} 件中 {startItem} - {endItem} 件を表示
       </div>
 
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handlePageChange(currentPage - 1)}
+          onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
         >
           前へ
@@ -98,7 +117,7 @@ export function Pagination({ currentPage, totalPages, totalItems }: PaginationPr
               key={pageNum}
               variant={currentPage === pageNum ? 'primary' : 'outline'}
               size="sm"
-              onClick={() => handlePageChange(pageNum)}
+              onClick={() => onPageChange(pageNum)}
             >
               {pageNum}
             </Button>
@@ -108,7 +127,7 @@ export function Pagination({ currentPage, totalPages, totalItems }: PaginationPr
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handlePageChange(currentPage + 1)}
+          onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
           次へ

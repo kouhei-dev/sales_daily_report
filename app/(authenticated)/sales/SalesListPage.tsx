@@ -8,11 +8,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
 import { SalesSearchForm } from './SalesSearchForm';
 import { SalesTable } from './SalesTable';
-import { Pagination } from './Pagination';
+import { Pagination } from '@/components/common/Pagination';
 import type { SalesListResponse } from '@/types/sales';
 import type { ApiSuccessResponse, ApiErrorResponse } from '@/types/session';
+import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
+import { usePagination } from '@/hooks/usePagination';
 
-// 所属部署の定数（実際のデータから取得する場合は環境変数やAPIから取得）
+// 所属部署の定数（将来的には部署マスタAPIから取得予定）
+// TODO: Issue #未定 で部署マスタAPIから動的に取得するように変更
 const DEPARTMENTS = ['営業1課', '営業2課', '営業3課', '営業4課'];
 
 /**
@@ -27,6 +30,7 @@ const DEPARTMENTS = ['営業1課', '営業2課', '営業3課', '営業4課'];
  */
 export function SalesListPage() {
   const searchParams = useSearchParams();
+  const { goToPage } = usePagination({ basePath: '/sales' });
   const [data, setData] = useState<SalesListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +52,7 @@ export function SalesListPage() {
         if (salesCode) params.set('sales_code', salesCode);
         if (department) params.set('department', department);
         params.set('page', page);
-        params.set('limit', '20');
+        params.set('limit', String(DEFAULT_PAGE_SIZE));
 
         const response = await fetch(`/api/sales?${params.toString()}`, {
           method: 'GET',
@@ -113,6 +117,8 @@ export function SalesListPage() {
               currentPage={data.pagination.current_page}
               totalPages={data.pagination.total_pages}
               totalItems={data.pagination.total_items}
+              onPageChange={goToPage}
+              pageSize={DEFAULT_PAGE_SIZE}
             />
           )}
         </>
