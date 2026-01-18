@@ -35,6 +35,7 @@ export function SideMenu({ isManager, isOpen = false, onClose }: SideMenuProps) 
     {
       href: '/',
       label: 'ホーム',
+      // Icon: ホーム（家の形）
       icon: (
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -49,6 +50,7 @@ export function SideMenu({ isManager, isOpen = false, onClose }: SideMenuProps) 
     {
       href: '/reports',
       label: '日報一覧',
+      // Icon: ドキュメント（書類の形）
       icon: (
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -63,6 +65,7 @@ export function SideMenu({ isManager, isOpen = false, onClose }: SideMenuProps) 
     {
       href: '/reports/create',
       label: '日報作成',
+      // Icon: プラス記号（追加を表す十字）
       icon: (
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -72,6 +75,7 @@ export function SideMenu({ isManager, isOpen = false, onClose }: SideMenuProps) 
     {
       href: '/customers',
       label: '顧客マスタ',
+      // Icon: ユーザーグループ（複数の人物）
       icon: (
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -86,6 +90,7 @@ export function SideMenu({ isManager, isOpen = false, onClose }: SideMenuProps) 
     {
       href: '/sales',
       label: '営業マスタ',
+      // Icon: ユーザーアド（人物＋追加を表すプラス）
       icon: (
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -137,6 +142,7 @@ export function SideMenu({ isManager, isOpen = false, onClose }: SideMenuProps) 
             aria-label="メニューを閉じる"
             type="button"
           >
+            {/* Icon: X印（閉じるボタン） */}
             <svg
               className="h-6 w-6 text-gray-600"
               fill="none"

@@ -69,6 +69,7 @@ export function Header({ userName, isManager, onMenuToggle }: HeaderProps) {
             aria-label="メニューを開く"
             type="button"
           >
+            {/* Icon: ハンバーガーメニュー（3本の横線） */}
             <svg
               className="h-6 w-6 text-gray-600"
               fill="none"
