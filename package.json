@@ -27,9 +27,10 @@
     "db:clean": "docker compose down -v",
     "db:test": "tsx scripts/test-db-connection.ts",
     "db:push": "dotenv -e .env.local -- prisma db push",
-    "db:seed": "tsx scripts/seed.ts",
+    "db:seed": "prisma db seed",
     "db:tools": "docker compose --profile tools up -d",
-    "db:setup": "npm run db:up && npm run db:test && npm run db:push"
+    "db:init-replica": "bash scripts/init-mongo-replica.sh",
+    "db:setup": "npm run db:up && npm run db:init-replica && npm run db:test && npm run db:push"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -80,5 +81,8 @@
     "**/*.{json,md,css}": [
       "prettier --write"
     ]
+  },
+  "prisma": {
+    "seed": "dotenv -e .env.local -- tsx prisma/seed.ts"
   }
 }
