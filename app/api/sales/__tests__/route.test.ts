@@ -444,4 +444,24 @@ describe('POST /api/sales', () => {
       ])
     );
   });
+
+  it('管理者以外はアクセス拒否される', async () => {
+    await mockNonManagerAuth();
+
+    const request = new NextRequest('http://localhost/api/sales', {
+      method: 'POST',
+      body: JSON.stringify({
+        sales_code: 'S999',
+        sales_name: 'テスト太郎',
+        email: 'test@example.com',
+        password: 'Test1234!@',
+        department: '営業1課',
+        is_manager: false,
+      }),
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(403);
+  });
 });
