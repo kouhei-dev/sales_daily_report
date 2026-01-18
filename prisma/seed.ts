@@ -29,9 +29,55 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 /**
+ * 所属部署マスタのシードデータを投入
+ */
+async function seedDepartments() {
+  console.log('🏢 Seeding Department data...');
+
+  const dept1 = await prisma.department.upsert({
+    where: { departmentName: '営業1課' },
+    update: {},
+    create: {
+      departmentName: '営業1課',
+      displayOrder: 1,
+    },
+  });
+
+  const dept2 = await prisma.department.upsert({
+    where: { departmentName: '営業2課' },
+    update: {},
+    create: {
+      departmentName: '営業2課',
+      displayOrder: 2,
+    },
+  });
+
+  const dept3 = await prisma.department.upsert({
+    where: { departmentName: '営業3課' },
+    update: {},
+    create: {
+      departmentName: '営業3課',
+      displayOrder: 3,
+    },
+  });
+
+  const dept4 = await prisma.department.upsert({
+    where: { departmentName: '営業4課' },
+    update: {},
+    create: {
+      departmentName: '営業4課',
+      displayOrder: 4,
+    },
+  });
+
+  console.log('✅ Department data seeded successfully');
+  return { dept1, dept2, dept3, dept4 };
+}
+
+/**
  * 営業マスタのシードデータを投入
  */
-async function seedSales() {
+async function seedSales(departments: { dept1: any; dept2: any }) {
   console.log('📊 Seeding Sales data...');
 
   // マネージャー1: 山田太郎
@@ -43,7 +89,7 @@ async function seedSales() {
       salesName: '山田太郎',
       email: 'yamada@example.com',
       passwordHash: await hashPassword('password123'),
-      department: '営業1課',
+      departmentId: departments.dept1.id,
       isManager: true,
     },
   });
@@ -57,7 +103,7 @@ async function seedSales() {
       salesName: '佐藤花子',
       email: 'sato@example.com',
       passwordHash: await hashPassword('password123'),
-      department: '営業1課',
+      departmentId: departments.dept1.id,
       isManager: false,
       managerId: manager1.id,
     },
@@ -72,7 +118,7 @@ async function seedSales() {
       salesName: '鈴木一郎',
       email: 'suzuki@example.com',
       passwordHash: await hashPassword('password123'),
-      department: '営業2課',
+      departmentId: departments.dept2.id,
       isManager: false,
     },
   });
@@ -86,7 +132,7 @@ async function seedSales() {
       salesName: '田中次郎',
       email: 'tanaka@example.com',
       passwordHash: await hashPassword('password123'),
-      department: '営業2課',
+      departmentId: departments.dept2.id,
       isManager: true,
     },
   });
@@ -303,11 +349,22 @@ async function main() {
       await prisma.visitRecord.deleteMany();
       await prisma.dailyReport.deleteMany();
       await prisma.customer.deleteMany();
+
+      // 自己参照リレーションがあるため、先にmanagerIdをnullに設定
+      await prisma.sales.updateMany({
+        data: { managerId: null },
+      });
       await prisma.sales.deleteMany();
+
+      await prisma.department.deleteMany();
       console.log('✅ Cleanup completed');
     }
 
-    const salesData = await seedSales();
+    const departmentData = await seedDepartments();
+    const salesData = await seedSales({
+      dept1: departmentData.dept1,
+      dept2: departmentData.dept2,
+    });
     const customerData = await seedCustomers({
       sales1: salesData.sales1,
       sales2: salesData.sales2,
@@ -321,6 +378,7 @@ async function main() {
     console.log('🎉 All seed data inserted successfully!');
     console.log('');
     console.log('📋 Summary:');
+    console.log('  - Departments: 4 records');
     console.log('  - Sales: 4 records (2 managers, 2 staff)');
     console.log('  - Customers: 3 records');
     console.log(`  - Daily Reports: ${reports.length} records`);

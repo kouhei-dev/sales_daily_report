@@ -10,22 +10,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 営業マスタ
-model Sales {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  salesCode   String   @unique @map("sales_code")
-  salesName   String   @map("sales_name")
-  email       String   @unique
-  passwordHash String  @map("password_hash")
-  department  String
-  managerId   String?  @map("manager_id") @db.ObjectId
-  isManager   Boolean  @default(false) @map("is_manager")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+// 所属部署マスタ
+model Department {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  departmentName String @unique @map("department_name")
+  displayOrder Int      @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
-  manager       Sales?        @relation("ManagerSubordinate", fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  subordinates  Sales[]       @relation("ManagerSubordinate")
+  sales Sales[]
+
+  @@map("departments")
+}
+
+// 営業マスタ
+model Sales {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  salesCode    String   @unique @map("sales_code")
+  salesName    String   @map("sales_name")
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  departmentId String   @map("department_id") @db.ObjectId
+  managerId    String?  @map("manager_id") @db.ObjectId
+  isManager    Boolean  @default(false) @map("is_manager")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  department    Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  manager       Sales?     @relation("ManagerSubordinate", fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subordinates  Sales[]    @relation("ManagerSubordinate")
   customers     Customer[]
   dailyReports  DailyReport[]
   comments      Comment[]
