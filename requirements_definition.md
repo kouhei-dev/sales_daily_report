@@ -29,6 +29,7 @@
 
 - **顧客マスタ**: 顧客情報の管理
 - **営業マスタ**: 営業担当者情報の管理
+- **所属部署マスタ**: 所属部署情報の管理
 
 ## 3. ユーザー種別
 
@@ -40,10 +41,11 @@
 ### 4.1 主要エンティティ
 
 1. **営業マスタ** (Sales)
-2. **顧客マスタ** (Customer)
-3. **日報** (DailyReport)
-4. **訪問記録** (VisitRecord)
-5. **コメント** (Comment)
+2. **所属部署マスタ** (Department)
+3. **顧客マスタ** (Customer)
+4. **日報** (DailyReport)
+5. **訪問記録** (VisitRecord)
+6. **コメント** (Comment)
 
 ## 5. ER図
 
@@ -51,18 +53,27 @@
 
 ```mermaid
 erDiagram
+    Department ||--o{ Sales : "所属する"
     Sales ||--o{ DailyReport : "作成する"
     Sales ||--o{ Comment : "コメントする"
     DailyReport ||--|{ VisitRecord : "含む"
     DailyReport ||--o{ Comment : "受ける"
     Customer ||--o{ VisitRecord : "訪問される"
 
+    Department {
+        int department_id PK "所属部署ID"
+        string department_name UK "所属部署名"
+        int display_order "表示順"
+        datetime created_at "登録日時"
+        datetime updated_at "更新日時"
+    }
+
     Sales {
         int sales_id PK "営業ID"
         string sales_code UK "営業コード"
         string sales_name "営業担当者名"
         string email "メールアドレス"
-        string department "所属部署"
+        int department_id FK "所属部署ID"
         int manager_id FK "上長ID"
         boolean is_manager "管理者フラグ"
         datetime created_at "登録日時"
@@ -122,6 +133,7 @@ erDiagram
 
 ### 6.1 リレーションシップ
 
+- 所属部署マスタと営業マスタは1対多の関係（1つの部署に複数の営業が所属）
 - 営業マスタは自己参照により上長関係を表現
 - 1つの日報に複数の訪問記録が紐づく
 - 1つの日報に複数のコメントが紐づく
