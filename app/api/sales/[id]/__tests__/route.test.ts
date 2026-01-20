@@ -13,6 +13,7 @@ const OTHER_SALES_ID = '507f1f77bcf86cd799439014';
 const mockSalesFindUnique = vi.hoisted(() => vi.fn());
 const mockSalesUpdate = vi.hoisted(() => vi.fn());
 const mockSalesDelete = vi.hoisted(() => vi.fn());
+const mockDepartmentFindUnique = vi.hoisted(() => vi.fn());
 const mockDailyReportCount = vi.hoisted(() => vi.fn());
 const mockCustomerCount = vi.hoisted(() => vi.fn());
 const mockDisconnect = vi.hoisted(() => vi.fn());
@@ -24,6 +25,9 @@ vi.mock('@prisma/client', () => {
       findUnique: mockSalesFindUnique,
       update: mockSalesUpdate,
       delete: mockSalesDelete,
+    };
+    department = {
+      findUnique: mockDepartmentFindUnique,
     };
     dailyReport = {
       count: mockDailyReportCount,
@@ -194,6 +198,13 @@ describe('PUT /api/sales/:id', () => {
     // メールアドレス重複チェック（重複なし）
     mockSalesFindUnique.mockResolvedValueOnce(null);
 
+    // 部署が存在する
+    mockDepartmentFindUnique.mockResolvedValueOnce({
+      id: '507f1f77bcf86cd799439022',
+      departmentName: '営業2課',
+      displayOrder: 2,
+    } as any);
+
     // 上司が存在して、管理者である
     mockSalesFindUnique.mockResolvedValueOnce({
       id: VALID_MANAGER_ID,
@@ -262,6 +273,13 @@ describe('PUT /api/sales/:id', () => {
 
     // メールアドレスは変更なし
     mockSalesFindUnique.mockResolvedValueOnce(null);
+
+    // 部署が存在する
+    mockDepartmentFindUnique.mockResolvedValueOnce({
+      id: '507f1f77bcf86cd799439022',
+      departmentName: '営業2課',
+      displayOrder: 2,
+    } as any);
 
     mockSalesUpdate.mockResolvedValue({
       id: VALID_SALES_ID,

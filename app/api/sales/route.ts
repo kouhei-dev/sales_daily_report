@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     const where: {
       salesName?: { contains: string; mode: 'insensitive' };
       salesCode?: { contains: string; mode: 'insensitive' };
-      department?: string;
+      department?: { departmentName: string };
     } = {};
 
     if (sales_name) {
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       where.salesCode = { contains: sales_code, mode: 'insensitive' };
     }
     if (department) {
-      where.department = department;
+      where.department = { departmentName: department };
     }
 
     // 総件数の取得
@@ -85,6 +85,11 @@ export async function GET(request: NextRequest) {
         createdAt: 'desc',
       },
       include: {
+        department: {
+          select: {
+            departmentName: true,
+          },
+        },
         manager: {
           select: {
             id: true,
@@ -101,7 +106,7 @@ export async function GET(request: NextRequest) {
         sales_code: sales.salesCode,
         sales_name: sales.salesName,
         email: sales.email,
-        department: sales.department,
+        department: sales.department.departmentName,
         is_manager: sales.isManager,
         ...(sales.manager && {
           manager: {
@@ -243,6 +248,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 所属部署の存在確認
+    const departmentRecord = await prisma.department.findUnique({
+      where: { departmentName: department },
+    });
+
+    if (!departmentRecord) {
+      const errorResponse: ApiErrorResponse = {
+        status: 'error',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: '入力内容に誤りがあります',
+          details: [{ field: 'department', message: '指定された所属部署が見つかりません' }],
+        },
+      };
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
+
     // パスワードのハッシュ化
     const passwordHash = await hashPassword(password);
 
@@ -253,7 +275,7 @@ export async function POST(request: NextRequest) {
         salesName: sales_name,
         email,
         passwordHash,
-        department,
+        departmentId: departmentRecord.id,
         managerId: manager_id,
         isManager: is_manager,
       },

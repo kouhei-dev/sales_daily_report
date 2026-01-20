@@ -70,11 +70,51 @@ describe('SalesListPage', () => {
     });
   });
 
-  test('ページタイトルと説明が表示される', async () => {
+  /**
+   * テストヘルパー関数: departments API のモックを設定
+   */
+  const mockDepartmentsApi = (departments: string[] = []) => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
-      json: async () => mockSalesListResponse,
+      json: async () => ({
+        status: 'success',
+        data: {
+          departments: departments.map((name, index) => ({
+            department_id: `dept-${index}`,
+            department_name: name,
+            display_order: index + 1,
+          })),
+        },
+      }),
     });
+  };
+
+  /**
+   * テストヘルパー関数: sales API のモックを設定
+   */
+  const mockSalesApi = (
+    response: ApiSuccessResponse<SalesListResponse> | ApiErrorResponse = mockSalesListResponse,
+    ok = true
+  ) => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok,
+      json: async () => response,
+    });
+  };
+
+  /**
+   * テストヘルパー関数: departments + sales 両方のAPIモックを一度に設定
+   */
+  const mockBothApis = (
+    salesResponse: ApiSuccessResponse<SalesListResponse> = mockSalesListResponse,
+    departments: string[] = []
+  ) => {
+    mockDepartmentsApi(departments);
+    mockSalesApi(salesResponse);
+  };
+
+  test('ページタイトルと説明が表示される', async () => {
+    mockBothApis();
 
     render(<SalesListPage />);
 
@@ -83,10 +123,7 @@ describe('SalesListPage', () => {
   });
 
   test('新規登録ボタンが表示される', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    mockBothApis();
 
     render(<SalesListPage />);
 
@@ -106,10 +143,7 @@ describe('SalesListPage', () => {
   });
 
   test('データ取得成功時に営業一覧が表示される', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    mockBothApis();
 
     render(<SalesListPage />);
 
@@ -136,10 +170,8 @@ describe('SalesListPage', () => {
       },
     };
 
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: false,
-      json: async () => errorResponse,
-    });
+    mockDepartmentsApi();
+    mockSalesApi(errorResponse, false);
 
     render(<SalesListPage />);
 
@@ -161,10 +193,7 @@ describe('SalesListPage', () => {
       }),
     });
 
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    mockBothApis();
 
     render(<SalesListPage />);
 
@@ -189,10 +218,7 @@ describe('SalesListPage', () => {
   });
 
   test('APIリクエストに認証情報が含まれる', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    mockBothApis();
 
     render(<SalesListPage />);
 
@@ -218,10 +244,7 @@ describe('SalesListPage', () => {
       },
     };
 
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => emptyResponse,
-    });
+    mockBothApis(emptyResponse);
 
     render(<SalesListPage />);
 
@@ -233,15 +256,13 @@ describe('SalesListPage', () => {
   });
 
   test('検索パラメータの変更時に再度データを取得する', async () => {
+    // 初回マウント時
+    mockBothApis();
+
     const { rerender } = render(<SalesListPage />);
 
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
-
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
     });
 
     // searchParamsを変更
@@ -249,15 +270,13 @@ describe('SalesListPage', () => {
       get: vi.fn((key: string) => (key === 'sales_name' ? '田中' : null)),
     });
 
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    // 再レンダリング時（sales APIのみ再取得）
+    mockSalesApi();
 
     rerender(<SalesListPage />);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(3);
     });
   });
 

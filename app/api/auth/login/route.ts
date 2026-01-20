@@ -62,6 +62,11 @@ export async function POST(request: NextRequest) {
     const user = await prisma.sales.findUnique({
       where: { salesCode: sales_code },
       include: {
+        department: {
+          select: {
+            departmentName: true,
+          },
+        },
         manager: {
           select: {
             id: true,
@@ -93,7 +98,7 @@ export async function POST(request: NextRequest) {
       salesCode: user.salesCode,
       salesName: user.salesName,
       email: user.email,
-      department: user.department,
+      department: user.department.departmentName,
       isManager: user.isManager,
     });
 
@@ -104,7 +109,7 @@ export async function POST(request: NextRequest) {
         sales_code: user.salesCode,
         sales_name: user.salesName,
         email: user.email,
-        department: user.department,
+        department: user.department.departmentName,
         is_manager: user.isManager,
         ...(user.manager && {
           manager: {

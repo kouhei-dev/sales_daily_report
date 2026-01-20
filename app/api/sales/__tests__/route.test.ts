@@ -8,6 +8,7 @@ const mockSalesFindMany = vi.hoisted(() => vi.fn());
 const mockSalesCount = vi.hoisted(() => vi.fn());
 const mockSalesFindUnique = vi.hoisted(() => vi.fn());
 const mockSalesCreate = vi.hoisted(() => vi.fn());
+const mockDepartmentFindUnique = vi.hoisted(() => vi.fn());
 const mockDisconnect = vi.hoisted(() => vi.fn());
 
 // モックの設定
@@ -18,6 +19,9 @@ vi.mock('@prisma/client', () => {
       count: mockSalesCount,
       findUnique: mockSalesFindUnique,
       create: mockSalesCreate,
+    };
+    department = {
+      findUnique: mockDepartmentFindUnique,
     };
     $disconnect = mockDisconnect;
   }
@@ -158,7 +162,7 @@ describe('GET /api/sales', () => {
       expect.objectContaining({
         where: expect.objectContaining({
           salesName: { contains: '佐藤', mode: 'insensitive' },
-          department: '営業1課',
+          department: { departmentName: '営業1課' },
         }),
       })
     );
@@ -198,10 +202,17 @@ describe('POST /api/sales', () => {
     const { hashPassword } = await import('@/lib/auth');
 
     const validManagerId = '507f1f77bcf86cd799439011'; // Valid MongoDB ObjectId
+    const validDepartmentId = '507f1f77bcf86cd799439022'; // Valid MongoDB ObjectId
 
     // 営業コードとメールアドレスが重複していない
     mockSalesFindUnique.mockResolvedValueOnce(null);
     mockSalesFindUnique.mockResolvedValueOnce(null);
+    // 部署が存在する
+    mockDepartmentFindUnique.mockResolvedValueOnce({
+      id: validDepartmentId,
+      departmentName: '営業1課',
+      displayOrder: 1,
+    } as any);
     // 上司が存在して、管理者である
     mockSalesFindUnique.mockResolvedValueOnce({
       id: validManagerId,

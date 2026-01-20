@@ -10,18 +10,16 @@ import { SalesSearchForm } from './SalesSearchForm';
 import { SalesTable } from './SalesTable';
 import { Pagination } from '@/components/common/Pagination';
 import type { SalesListResponse } from '@/types/sales';
+import type { DepartmentListResponse } from '@/types/department';
 import type { ApiSuccessResponse, ApiErrorResponse } from '@/types/session';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { usePagination } from '@/hooks/usePagination';
-
-// 所属部署の定数（将来的には部署マスタAPIから取得予定）
-// TODO: Issue #未定 で部署マスタAPIから動的に取得するように変更
-const DEPARTMENTS = ['営業1課', '営業2課', '営業3課', '営業4課'];
 
 /**
  * 営業マスタ一覧画面のメインコンポーネント
  *
  * 機能:
+ * - 所属部署マスタAPIから部署一覧を取得
  * - 検索フォームの表示
  * - APIからデータ取得
  * - 一覧テーブルの表示
@@ -32,8 +30,33 @@ export function SalesListPage() {
   const searchParams = useSearchParams();
   const { goToPage } = usePagination({ basePath: '/sales' });
   const [data, setData] = useState<SalesListResponse | null>(null);
+  const [departments, setDepartments] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 所属部署一覧を取得
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch('/api/departments', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const result: ApiSuccessResponse<DepartmentListResponse> = await response.json();
+          // department_name のみを配列に抽出
+          const departmentNames = result.data.departments.map((dept) => dept.department_name);
+          setDepartments(departmentNames);
+        }
+      } catch (err) {
+        console.error('Departments fetch error:', err);
+        // 部署取得に失敗してもエラー表示はせず、空配列のまま続行
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   useEffect(() => {
     const fetchSalesList = async () => {
@@ -91,7 +114,7 @@ export function SalesListPage() {
       </div>
 
       {/* 検索フォーム */}
-      <SalesSearchForm departments={DEPARTMENTS} />
+      <SalesSearchForm departments={departments} />
 
       {/* エラー表示 */}
       {error && (
