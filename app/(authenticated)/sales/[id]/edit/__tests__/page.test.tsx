@@ -120,7 +120,9 @@ describe('SalesEditPage', () => {
       salesCode: 'S001',
       salesName: '山田太郎',
       email: 'yamada@example.com',
-      department: '営業1課',
+      department: {
+        departmentName: '営業1課',
+      },
       isManager: true,
       manager: {
         id: '507f1f77bcf86cd799439012',
@@ -159,7 +161,9 @@ describe('SalesEditPage', () => {
       salesCode: 'S001',
       salesName: '山田太郎',
       email: 'yamada@example.com',
-      department: '営業1課',
+      department: {
+        departmentName: '営業1課',
+      },
       isManager: true,
       manager: {
         id: '507f1f77bcf86cd799439012',
@@ -180,6 +184,11 @@ describe('SalesEditPage', () => {
           select: {
             id: true,
             salesName: true,
+          },
+        },
+        department: {
+          select: {
+            departmentName: true,
           },
         },
       },
@@ -219,7 +228,9 @@ describe('SalesEditPage', () => {
       salesCode: 'S001',
       salesName: '山田太郎',
       email: 'yamada@example.com',
-      department: '営業1課',
+      department: {
+        departmentName: '営業1課',
+      },
       isManager: true,
       manager: {
         id: '507f1f77bcf86cd799439012',
