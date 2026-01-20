@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SalesForm } from '../SalesForm';
 import type { SalesDetail } from '@/types/sales';
 import type { ApiSuccessResponse, ApiErrorResponse } from '@/types/session';
+import type { DepartmentListItem } from '@/types/department';
 
 // Next.js navigationのモック
 vi.mock('next/navigation', () => ({
@@ -17,6 +18,24 @@ global.fetch = vi.fn();
 describe('SalesForm', () => {
   const mockPush = vi.fn();
   const mockRefresh = vi.fn();
+
+  const mockDepartmentListResponse: ApiSuccessResponse<{ departments: DepartmentListItem[] }> = {
+    status: 'success',
+    data: {
+      departments: [
+        {
+          department_id: '1',
+          department_name: '営業1課',
+          display_order: 1,
+        },
+        {
+          department_id: '2',
+          department_name: '営業2課',
+          display_order: 2,
+        },
+      ],
+    },
+  };
 
   const mockManagerListResponse: ApiSuccessResponse<{ items: SalesDetail[] }> = {
     status: 'success',
@@ -61,22 +80,60 @@ describe('SalesForm', () => {
     updated_at: '2024-01-01T00:00:00.000Z',
   };
 
+  /**
+   * fetchのモックを設定するヘルパー関数
+   * @param departmentsResponse 所属部署一覧のレスポンス (省略時はデフォルト)
+   * @param managersResponse 管理者一覧のレスポンス (省略時はデフォルト)
+   * @param additionalResponses 追加のレスポンス配列
+   */
+  const setupFetchMock = (
+    departmentsResponse = mockDepartmentListResponse,
+    managersResponse = mockManagerListResponse,
+    additionalResponses: Array<
+      unknown | { ok: boolean; status?: number; json: () => Promise<unknown> }
+    > = []
+  ) => {
+    const responses = [
+      // 1st call: 所属部署一覧取得
+      {
+        ok: true,
+        json: async () => departmentsResponse,
+      },
+      // 2nd call: 管理者一覧取得
+      {
+        ok: true,
+        json: async () => managersResponse,
+      },
+      // 3rd call以降: 追加のレスポンス
+      ...additionalResponses.map((response) => {
+        // レスポンスオブジェクト形式の場合はそのまま使用
+        if (response && typeof response === 'object' && 'json' in response) {
+          return response;
+        }
+        // それ以外はデフォルトのレスポンスとして扱う
+        return {
+          ok: true,
+          json: async () => response,
+        };
+      }),
+    ];
+
+    responses.forEach((response) => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(response);
+    });
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     (useRouter as ReturnType<typeof vi.fn>).mockReturnValue({
       push: mockPush,
       refresh: mockRefresh,
     });
-
-    // 管理者一覧取得のデフォルトモック
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: async () => mockManagerListResponse,
-    });
   });
 
   describe('新規登録モード', () => {
     test('全ての入力フィールドが表示される', async () => {
+      setupFetchMock();
       render(<SalesForm isEditMode={false} />);
 
       await waitFor(() => {
@@ -93,6 +150,7 @@ describe('SalesForm', () => {
     });
 
     test('営業コードフィールドが入力可能', async () => {
+      setupFetchMock();
       render(<SalesForm isEditMode={false} />);
 
       await waitFor(() => {
@@ -104,6 +162,7 @@ describe('SalesForm', () => {
     });
 
     test('保存ボタンとキャンセルボタンが表示される', async () => {
+      setupFetchMock();
       render(<SalesForm isEditMode={false} />);
 
       await waitFor(() => {
@@ -114,6 +173,7 @@ describe('SalesForm', () => {
     });
 
     test('削除ボタンは表示されない', async () => {
+      setupFetchMock();
       render(<SalesForm isEditMode={false} />);
 
       await waitFor(() => {
@@ -123,6 +183,7 @@ describe('SalesForm', () => {
 
     test('必須項目が未入力の場合、バリデーションエラーが表示される', async () => {
       const user = userEvent.setup();
+      setupFetchMock();
       render(<SalesForm isEditMode={false} />);
 
       await waitFor(() => {
@@ -144,6 +205,7 @@ describe('SalesForm', () => {
 
     test('パスワードと確認用パスワードが一致しない場合、エラーが表示される', async () => {
       const user = userEvent.setup();
+      setupFetchMock();
       render(<SalesForm isEditMode={false} />);
 
       await waitFor(() => {
@@ -176,17 +238,8 @@ describe('SalesForm', () => {
         },
       };
 
-      // 管理者一覧取得のレスポンス（最初）
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockManagerListResponse,
-      });
-
-      // 作成APIのレスポンス
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockCreateResponse,
-      });
+      // モック設定（所属部署、管理者、作成API）
+      setupFetchMock(undefined, undefined, [mockCreateResponse]);
 
       render(<SalesForm isEditMode={false} />);
 
@@ -214,9 +267,23 @@ describe('SalesForm', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: expect.stringContaining('"sales_code":"S100"'),
           })
         );
+      });
+
+      // リクエストボディの包括的な検証
+      const callArgs = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find(
+        (call) => call[0] === '/api/sales' && call[1]?.method === 'POST'
+      );
+      expect(callArgs).toBeDefined();
+      const requestBody = JSON.parse(callArgs![1].body);
+      expect(requestBody).toMatchObject({
+        sales_code: 'S100',
+        sales_name: '新規営業',
+        email: 'new@example.com',
+        password: 'ValidPass123!',
+        department: '営業1課',
+        is_manager: false,
       });
 
       expect(mockPush).toHaveBeenCalledWith('/sales');
@@ -233,17 +300,8 @@ describe('SalesForm', () => {
         },
       };
 
-      // 管理者一覧取得のレスポンス
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockManagerListResponse,
-      });
-
-      // 作成APIのエラーレスポンス
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: false,
-        json: async () => mockErrorResponse,
-      });
+      // モック設定（所属部署、管理者、エラーレスポンス）
+      setupFetchMock(undefined, undefined, [{ ok: false, json: async () => mockErrorResponse }]);
 
       render(<SalesForm isEditMode={false} />);
 
@@ -271,6 +329,7 @@ describe('SalesForm', () => {
 
   describe('編集モード', () => {
     test('既存データがフォームに表示される', async () => {
+      setupFetchMock();
       render(<SalesForm salesData={mockSalesData} isEditMode={true} />);
 
       await waitFor(() => {
@@ -286,6 +345,7 @@ describe('SalesForm', () => {
     });
 
     test('営業コードフィールドが無効化されている', async () => {
+      setupFetchMock();
       render(<SalesForm salesData={mockSalesData} isEditMode={true} />);
 
       await waitFor(() => {
@@ -297,6 +357,7 @@ describe('SalesForm', () => {
     });
 
     test('パスワードフィールドが任意になっている', async () => {
+      setupFetchMock();
       render(<SalesForm salesData={mockSalesData} isEditMode={true} />);
 
       await waitFor(() => {
@@ -310,6 +371,7 @@ describe('SalesForm', () => {
     });
 
     test('削除ボタンが表示される', async () => {
+      setupFetchMock();
       render(<SalesForm salesData={mockSalesData} isEditMode={true} />);
 
       await waitFor(() => {
@@ -327,17 +389,8 @@ describe('SalesForm', () => {
         },
       };
 
-      // 管理者一覧取得のレスポンス
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockManagerListResponse,
-      });
-
-      // 更新APIのレスポンス
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockUpdateResponse,
-      });
+      // モック設定（所属部署、管理者、更新API）
+      setupFetchMock(undefined, undefined, [mockUpdateResponse]);
 
       render(<SalesForm salesData={mockSalesData} isEditMode={true} />);
 
@@ -362,10 +415,24 @@ describe('SalesForm', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: expect.stringContaining('"sales_name":"山田次郎"'),
           })
         );
       });
+
+      // リクエストボディの包括的な検証
+      const callArgs = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find(
+        (call) => call[0] === '/api/sales/507f1f77bcf86cd799439011' && call[1]?.method === 'PUT'
+      );
+      expect(callArgs).toBeDefined();
+      const requestBody = JSON.parse(callArgs![1].body);
+      expect(requestBody).toMatchObject({
+        sales_name: '山田次郎',
+        email: 'yamada@example.com',
+        department: '営業1課',
+        is_manager: false,
+      });
+      // パスワードは変更していないので含まれないはず
+      expect(requestBody.password).toBeUndefined();
 
       expect(mockPush).toHaveBeenCalledWith('/sales');
       expect(mockRefresh).toHaveBeenCalled();
@@ -373,6 +440,7 @@ describe('SalesForm', () => {
 
     test('削除ボタンをクリックすると確認ダイアログが表示される', async () => {
       const user = userEvent.setup();
+      setupFetchMock();
       render(<SalesForm salesData={mockSalesData} isEditMode={true} />);
 
       await waitFor(() => {
@@ -392,17 +460,8 @@ describe('SalesForm', () => {
     test('削除確認ダイアログで削除を実行すると、APIが呼ばれ一覧画面に戻る', async () => {
       const user = userEvent.setup();
 
-      // 管理者一覧取得のレスポンス
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockManagerListResponse,
-      });
-
-      // 削除APIのレスポンス
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        status: 204,
-      });
+      // モック設定（所属部署、管理者、削除API）
+      setupFetchMock(undefined, undefined, [{ ok: true, status: 204, json: async () => ({}) }]);
 
       render(<SalesForm salesData={mockSalesData} isEditMode={true} />);
 
@@ -441,6 +500,7 @@ describe('SalesForm', () => {
 
     test('削除確認ダイアログでキャンセルすると、削除が実行されない', async () => {
       const user = userEvent.setup();
+      setupFetchMock();
       render(<SalesForm salesData={mockSalesData} isEditMode={true} />);
 
       await waitFor(() => {
@@ -477,6 +537,7 @@ describe('SalesForm', () => {
   describe('共通機能', () => {
     test('キャンセルボタンをクリックすると一覧画面に戻る', async () => {
       const user = userEvent.setup();
+      setupFetchMock();
       render(<SalesForm isEditMode={false} />);
 
       await waitFor(() => {
@@ -490,6 +551,7 @@ describe('SalesForm', () => {
     });
 
     test('管理者一覧が正しくプルダウンに表示される', async () => {
+      setupFetchMock();
       render(<SalesForm isEditMode={false} />);
 
       await waitFor(() => {
@@ -507,6 +569,7 @@ describe('SalesForm', () => {
 
     test('入力エラーをクリアすると、エラーメッセージが消える', async () => {
       const user = userEvent.setup();
+      setupFetchMock();
       render(<SalesForm isEditMode={false} />);
 
       await waitFor(() => {

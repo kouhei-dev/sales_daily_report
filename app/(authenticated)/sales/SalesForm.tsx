@@ -21,9 +21,7 @@ import {
 } from '@/lib/validations/sales';
 import type { SalesDetail } from '@/types/sales';
 import type { ApiSuccessResponse, ApiErrorResponse } from '@/types/session';
-
-// 所属部署の定数（将来的には部署マスタAPIから取得予定）
-const DEPARTMENTS = ['営業1課', '営業2課', '営業3課', '営業4課'];
+import type { DepartmentListItem } from '@/types/department';
 
 export interface SalesFormProps {
   /** 編集モード時の営業情報 */
@@ -76,14 +74,42 @@ export function SalesForm({ salesData, isEditMode = false }: SalesFormProps) {
     []
   );
   const [loadingManagers, setLoadingManagers] = useState(false);
+  const [departmentList, setDepartmentList] = useState<Array<DepartmentListItem>>([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+
+  // 所属部署一覧の取得
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoadingDepartments(true);
+        const response = await fetch('/api/departments', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('所属部署一覧の取得に失敗しました');
+        }
+
+        const result: ApiSuccessResponse<{ departments: DepartmentListItem[] }> =
+          await response.json();
+        setDepartmentList(result.data.departments);
+      } catch (error) {
+        console.error('Failed to fetch departments:', error);
+      } finally {
+        setLoadingDepartments(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   // 管理者一覧の取得
   useEffect(() => {
     const fetchManagers = async () => {
       try {
         setLoadingManagers(true);
-        // 管理者のみを取得（簡易的にページサイズを大きくして取得）
-        const response = await fetch('/api/sales?limit=100', {
+        // バックエンドで管理者のみ絞り込み
+        const response = await fetch('/api/sales?is_manager=true&limit=100', {
           credentials: 'include',
         });
 
@@ -92,13 +118,10 @@ export function SalesForm({ salesData, isEditMode = false }: SalesFormProps) {
         }
 
         const result: ApiSuccessResponse<{ items: SalesDetail[] }> = await response.json();
-        // 管理者のみフィルタリング
-        const managers = result.data.items
-          .filter((s) => s.is_manager)
-          .map((s) => ({
-            sales_id: s.sales_id,
-            sales_name: s.sales_name,
-          }));
+        const managers = result.data.items.map((s) => ({
+          sales_id: s.sales_id,
+          sales_name: s.sales_name,
+        }));
         setManagerList(managers);
       } catch (error) {
         console.error('Failed to fetch managers:', error);
@@ -397,11 +420,12 @@ export function SalesForm({ salesData, isEditMode = false }: SalesFormProps) {
                 value={formData.department}
                 onChange={(e) => handleChange('department', e.target.value)}
                 error={!!errors.department}
+                disabled={loadingDepartments}
               >
                 <option value="">選択してください</option>
-                {DEPARTMENTS.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
+                {departmentList.map((dept) => (
+                  <option key={dept.department_id} value={dept.department_name}>
+                    {dept.department_name}
                   </option>
                 ))}
               </Select>

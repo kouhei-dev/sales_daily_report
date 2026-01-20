@@ -51,6 +51,11 @@ export default async function SalesEditPage({ params }: { params: Promise<{ id: 
             salesName: true,
           },
         },
+        department: {
+          select: {
+            departmentName: true,
+          },
+        },
       },
     });
   } catch (error) {
@@ -72,7 +77,7 @@ export default async function SalesEditPage({ params }: { params: Promise<{ id: 
     sales_code: sales.salesCode,
     sales_name: sales.salesName,
     email: sales.email,
-    department: sales.department,
+    department: sales.department.departmentName,
     is_manager: sales.isManager,
     ...(sales.manager && {
       manager: {
