@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
       sales_name: searchParams.get('sales_name') || undefined,
       sales_code: searchParams.get('sales_code') || undefined,
       department: searchParams.get('department') || undefined,
+      is_manager: searchParams.get('is_manager') || undefined,
       page: searchParams.get('page') || '1',
       limit: searchParams.get('limit') || '20',
     };
@@ -50,13 +51,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    const { sales_name, sales_code, department, page, limit } = validationResult.data;
+    const { sales_name, sales_code, department, is_manager, page, limit } = validationResult.data;
 
     // フィルタ条件の構築
     const where: {
       salesName?: { contains: string; mode: 'insensitive' };
       salesCode?: { contains: string; mode: 'insensitive' };
       department?: { departmentName: string };
+      isManager?: boolean;
     } = {};
 
     if (sales_name) {
@@ -67,6 +69,9 @@ export async function GET(request: NextRequest) {
     }
     if (department) {
       where.department = { departmentName: department };
+    }
+    if (is_manager !== undefined) {
+      where.isManager = is_manager === 'true';
     }
 
     // 総件数の取得

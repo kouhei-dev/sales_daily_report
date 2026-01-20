@@ -106,6 +106,7 @@ export const salesListQuerySchema = z.object({
   sales_name: z.string().optional(),
   sales_code: z.string().optional(),
   department: z.string().optional(),
+  is_manager: z.enum(['true', 'false']).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
