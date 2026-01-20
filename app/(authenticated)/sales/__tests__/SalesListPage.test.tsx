@@ -70,17 +70,51 @@ describe('SalesListPage', () => {
     });
   });
 
+  /**
+   * テストヘルパー関数: departments API のモックを設定
+   */
+  const mockDepartmentsApi = (departments: string[] = []) => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'success',
+        data: {
+          departments: departments.map((name, index) => ({
+            department_id: `dept-${index}`,
+            department_name: name,
+            display_order: index + 1,
+          })),
+        },
+      }),
+    });
+  };
+
+  /**
+   * テストヘルパー関数: sales API のモックを設定
+   */
+  const mockSalesApi = (
+    response: ApiSuccessResponse<SalesListResponse> | ApiErrorResponse = mockSalesListResponse,
+    ok = true
+  ) => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok,
+      json: async () => response,
+    });
+  };
+
+  /**
+   * テストヘルパー関数: departments + sales 両方のAPIモックを一度に設定
+   */
+  const mockBothApis = (
+    salesResponse: ApiSuccessResponse<SalesListResponse> = mockSalesListResponse,
+    departments: string[] = []
+  ) => {
+    mockDepartmentsApi(departments);
+    mockSalesApi(salesResponse);
+  };
+
   test('ページタイトルと説明が表示される', async () => {
-    // departments API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ status: 'success', data: { departments: [] } }),
-    });
-    // sales API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    mockBothApis();
 
     render(<SalesListPage />);
 
@@ -89,16 +123,7 @@ describe('SalesListPage', () => {
   });
 
   test('新規登録ボタンが表示される', async () => {
-    // departments API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ status: 'success', data: { departments: [] } }),
-    });
-    // sales API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    mockBothApis();
 
     render(<SalesListPage />);
 
@@ -118,16 +143,7 @@ describe('SalesListPage', () => {
   });
 
   test('データ取得成功時に営業一覧が表示される', async () => {
-    // departments API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ status: 'success', data: { departments: [] } }),
-    });
-    // sales API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    mockBothApis();
 
     render(<SalesListPage />);
 
@@ -154,16 +170,8 @@ describe('SalesListPage', () => {
       },
     };
 
-    // departments API (成功)
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ status: 'success', data: { departments: [] } }),
-    });
-    // sales API (失敗)
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: false,
-      json: async () => errorResponse,
-    });
+    mockDepartmentsApi();
+    mockSalesApi(errorResponse, false);
 
     render(<SalesListPage />);
 
@@ -185,16 +193,7 @@ describe('SalesListPage', () => {
       }),
     });
 
-    // departments API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ status: 'success', data: { departments: [] } }),
-    });
-    // sales API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    mockBothApis();
 
     render(<SalesListPage />);
 
@@ -219,16 +218,7 @@ describe('SalesListPage', () => {
   });
 
   test('APIリクエストに認証情報が含まれる', async () => {
-    // departments API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ status: 'success', data: { departments: [] } }),
-    });
-    // sales API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    mockBothApis();
 
     render(<SalesListPage />);
 
@@ -254,16 +244,7 @@ describe('SalesListPage', () => {
       },
     };
 
-    // departments API
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ status: 'success', data: { departments: [] } }),
-    });
-    // sales API (空のレスポンス)
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => emptyResponse,
-    });
+    mockBothApis(emptyResponse);
 
     render(<SalesListPage />);
 
@@ -275,16 +256,8 @@ describe('SalesListPage', () => {
   });
 
   test('検索パラメータの変更時に再度データを取得する', async () => {
-    // departments API (初回)
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ status: 'success', data: { departments: [] } }),
-    });
-    // sales API (初回)
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    // 初回マウント時
+    mockBothApis();
 
     const { rerender } = render(<SalesListPage />);
 
@@ -297,11 +270,8 @@ describe('SalesListPage', () => {
       get: vi.fn((key: string) => (key === 'sales_name' ? '田中' : null)),
     });
 
-    // sales API (再取得 - departments APIは再呼び出しされない)
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockSalesListResponse,
-    });
+    // 再レンダリング時（sales APIのみ再取得）
+    mockSalesApi();
 
     rerender(<SalesListPage />);
 
