@@ -45,6 +45,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const sales = await prisma.sales.findUnique({
       where: { id },
       include: {
+        department: {
+          select: {
+            departmentName: true,
+          },
+        },
         manager: {
           select: {
             id: true,
@@ -71,7 +76,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       sales_code: sales.salesCode,
       sales_name: sales.salesName,
       email: sales.email,
-      department: sales.department,
+      department: sales.department.departmentName,
       is_manager: sales.isManager,
       ...(sales.manager && {
         manager: {
@@ -224,18 +229,35 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
+    // 所属部署の存在確認
+    const departmentRecord = await prisma.department.findUnique({
+      where: { departmentName: department },
+    });
+
+    if (!departmentRecord) {
+      const errorResponse: ApiErrorResponse = {
+        status: 'error',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: '入力内容に誤りがあります',
+          details: [{ field: 'department', message: '指定された所属部署が見つかりません' }],
+        },
+      };
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
+
     // 更新データの構築
     const updateData: {
       salesName: string;
       email: string;
       passwordHash?: string;
-      department: string;
+      departmentId: string;
       managerId?: string | null;
       isManager: boolean;
     } = {
       salesName: sales_name,
       email,
-      department,
+      departmentId: departmentRecord.id,
       managerId: manager_id || null,
       isManager: is_manager,
     };

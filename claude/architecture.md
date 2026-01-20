@@ -32,6 +32,7 @@
 │  - 日報データ                               │
 │  - ユーザーマスタ                           │
 │  - 顧客マスタ                               │
+│  - 所属部署マスタ                           │
 └─────────────────────────────────────────────┘
 ```
 
@@ -111,16 +112,18 @@ sequenceDiagram
 | コメント確認済み | ○（自分の日報） | ×              |
 | 顧客マスタ       | ○（閲覧・編集） | ○              |
 | 営業マスタ       | ×               | ○              |
+| 所属部署マスタ   | ○（閲覧のみ）   | ○（閲覧のみ）  |
 
 ## データモデル
 
 ### 主要エンティティ
 
 1. **Sales（営業マスタ）**: 営業担当者情報
-2. **Customer（顧客マスタ）**: 顧客情報
-3. **DailyReport（日報）**: 日報の基本情報
-4. **VisitRecord（訪問記録）**: 日報に紐づく訪問記録
-5. **Comment（コメント）**: 日報に対するコメント
+2. **Department（所属部署マスタ）**: 所属部署情報
+3. **Customer（顧客マスタ）**: 顧客情報
+4. **DailyReport（日報）**: 日報の基本情報
+5. **VisitRecord（訪問記録）**: 日報に紐づく訪問記録
+6. **Comment（コメント）**: 日報に対するコメント
 
 ### エンティティ関係図（ER図）
 
@@ -128,6 +131,7 @@ sequenceDiagram
 
 **主要なリレーションシップ**:
 
+- Department 1 : N Sales（所属部署は複数の営業担当者を持つ）
 - Sales 1 : N DailyReport（営業担当者は複数の日報を持つ）
 - DailyReport 1 : N VisitRecord（日報は複数の訪問記録を持つ）
 - DailyReport 1 : N Comment（日報は複数のコメントを持つ）
@@ -143,23 +147,37 @@ Prismaスキーマは `prisma/schema.prisma` に定義します。
 **例**:
 
 ```prisma
+model Department {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  departmentName String   @unique @map("department_name")
+  displayOrder   Int      @map("display_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  sales Sales[]
+
+  @@map("departments")
+}
+
 model Sales {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  salesCode   String   @unique
-  salesName   String
-  email       String   @unique
-  department  String
-  isManager   Boolean  @default(false)
-  managerId   String?  @db.ObjectId
-  manager     Sales?   @relation("ManagerSubordinate", fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  subordinates Sales[] @relation("ManagerSubordinate")
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  salesCode    String   @unique @map("sales_code")
+  salesName    String   @map("sales_name")
+  email        String   @unique
+  departmentId String   @map("department_id") @db.ObjectId
+  isManager    Boolean  @default(false) @map("is_manager")
+  managerId    String?  @map("manager_id") @db.ObjectId
+
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  manager      Sales?     @relation("ManagerSubordinate", fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subordinates Sales[]    @relation("ManagerSubordinate")
 
   dailyReports DailyReport[]
   comments     Comment[]
   customers    Customer[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("sales")
 }
@@ -212,6 +230,7 @@ model DailyReport {
 | 顧客     | GET      | /api/v1/customers            | 顧客一覧取得     |
 | 顧客     | POST     | /api/v1/customers            | 顧客作成         |
 | 営業     | GET      | /api/v1/sales                | 営業一覧取得     |
+| 所属部署 | GET      | /api/departments             | 所属部署一覧取得 |
 
 ### OpenAPI + Zod による型安全なAPI
 
