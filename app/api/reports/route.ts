@@ -147,21 +147,31 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             isRead: true,
-            dailyReport: {
-              select: {
-                salesId: true,
-              },
-            },
+            commenterId: true,
           },
         },
       },
     });
 
+    // draft日報のフィルタリング: マネージャーは自分のdraftのみ、他人のdraftは除外
+    if (session.isManager && !targetSalesId) {
+      // 全員分を取得する場合は、他人のdraftを除外
+      reportList = reportList.filter((report) => {
+        if (report.status === 'DRAFT') {
+          return report.salesId === session.salesId;
+        }
+        return true; // submitted/commentedは全て表示
+      });
+    } else if (session.isManager && targetSalesId && targetSalesId !== session.salesId) {
+      // 特定の営業担当者を指定した場合も、そのdraftは除外
+      reportList = reportList.filter((report) => report.status !== 'DRAFT');
+    }
+
     // 未読コメントフィルタを適用（データ取得後にフィルタ）
     if (has_unread_comments !== undefined) {
       reportList = reportList.filter((report) => {
         const unreadCount = report.comments.filter(
-          (comment) => !comment.isRead && comment.dailyReport.salesId === report.salesId
+          (comment) => !comment.isRead && comment.commenterId !== report.salesId
         ).length;
         return has_unread_comments ? unreadCount > 0 : unreadCount === 0;
       });
@@ -172,7 +182,7 @@ export async function GET(request: NextRequest) {
       items: reportList.map((report) => {
         const hasComments = report.comments.length > 0;
         const unreadCommentCount = report.comments.filter(
-          (comment) => !comment.isRead && comment.dailyReport.salesId === report.salesId
+          (comment) => !comment.isRead && comment.commenterId !== report.salesId
         ).length;
 
         const statusMap: Record<string, 'draft' | 'submitted' | 'commented'> = {

@@ -238,16 +238,125 @@ describe('GET /api/reports', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect(mockDailyReportFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          reportDate: expect.objectContaining({
-            gte: expect.any(Date),
-            lte: expect.any(Date),
-          }),
-        }),
-      })
-    );
+
+    // 日付範囲がパラメータ通りに設定されているか確認
+    const callArgs = mockDailyReportFindMany.mock.calls[0][0];
+    expect(callArgs.where.reportDate.gte).toEqual(new Date('2026-01-01'));
+    // end_dateは当日の23:59:59まで含めるため、ローカルタイムで設定される
+    const expectedEndDate = new Date('2026-01-31');
+    expectedEndDate.setHours(23, 59, 59, 999);
+    expect(callArgs.where.reportDate.lte).toEqual(expectedEndDate);
+  });
+
+  it('マネージャーは他人のdraft日報を取得できない', async () => {
+    await mockAuth(true); // マネージャーとしてログイン
+
+    const mockReports = [
+      {
+        id: 'report-1',
+        salesId: 'other-sales-id', // 他人の日報
+        reportDate: new Date('2026-01-15'),
+        status: 'DRAFT',
+        sales: { id: 'other-sales-id', salesName: '他の営業担当' },
+        visitRecords: [],
+        comments: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'report-2',
+        salesId: 'other-sales-id',
+        reportDate: new Date('2026-01-16'),
+        status: 'SUBMITTED',
+        submittedAt: new Date(),
+        sales: { id: 'other-sales-id', salesName: '他の営業担当' },
+        visitRecords: [],
+        comments: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    mockDailyReportCount.mockResolvedValue(2);
+    mockDailyReportFindMany.mockResolvedValue(mockReports);
+
+    const url = new URL('http://localhost/api/reports');
+    const request = new NextRequest(url);
+    const response = await GET(request);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+
+    // draftは除外され、submittedのみが返される
+    expect(data.data.items).toHaveLength(1);
+    expect(data.data.items[0].status).toBe('submitted');
+  });
+
+  it('マネージャーは自分のdraft日報は取得できる', async () => {
+    await mockAuth(true); // マネージャーとしてログイン
+
+    const mockReports = [
+      {
+        id: 'report-1',
+        salesId: '507f1f77bcf86cd799439012', // 自分の日報
+        reportDate: new Date('2026-01-15'),
+        status: 'DRAFT',
+        sales: { id: '507f1f77bcf86cd799439012', salesName: 'テスト営業' },
+        visitRecords: [],
+        comments: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    mockDailyReportCount.mockResolvedValue(1);
+    mockDailyReportFindMany.mockResolvedValue(mockReports);
+
+    const url = new URL('http://localhost/api/reports');
+    const request = new NextRequest(url);
+    const response = await GET(request);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+
+    // 自分のdraftは表示される
+    expect(data.data.items).toHaveLength(1);
+    expect(data.data.items[0].status).toBe('draft');
+  });
+
+  it('未読コメント数は本人以外が書いたコメントのみカウントする', async () => {
+    await mockAuth(false);
+
+    const mockReports = [
+      {
+        id: 'report-1',
+        salesId: '507f1f77bcf86cd799439012',
+        reportDate: new Date('2026-01-15'),
+        status: 'COMMENTED',
+        sales: { id: '507f1f77bcf86cd799439012', salesName: 'テスト営業' },
+        visitRecords: [],
+        comments: [
+          { id: 'comment-1', isRead: false, commenterId: '507f1f77bcf86cd799439012' }, // 本人のコメント
+          { id: 'comment-2', isRead: false, commenterId: 'manager-id' }, // 他人のコメント
+          { id: 'comment-3', isRead: true, commenterId: 'manager-id' }, // 既読
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    mockDailyReportCount.mockResolvedValue(1);
+    mockDailyReportFindMany.mockResolvedValue(mockReports);
+
+    const url = new URL('http://localhost/api/reports');
+    const request = new NextRequest(url);
+    const response = await GET(request);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+
+    // 未読コメント数は1（本人以外の未読コメントのみ）
+    expect(data.data.items[0].unread_comment_count).toBe(1);
   });
 });
 
