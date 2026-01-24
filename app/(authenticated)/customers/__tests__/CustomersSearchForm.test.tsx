@@ -190,11 +190,14 @@ describe('CustomersSearchForm', () => {
     const searchButton = screen.getByRole('button', { name: '検索' });
     await user.click(searchButton);
 
-    const calledUrl = mockPush.mock.calls[0][0];
-    expect(calledUrl).toContain('customer_name');
-    expect(calledUrl).toContain('customer_code=C0');
-    expect(calledUrl).toContain('sales_name');
-    expect(calledUrl).toContain('page=1');
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.stringContaining('customer_name=%E3%83%86%E3%82%B9%E3%83%88')
+    );
+    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('customer_code=C0'));
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.stringContaining('sales_name=%E7%94%B0%E4%B8%AD%E8%8A%B1%E5%AD%90')
+    );
+    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('page=1'));
   });
 
   test('空の営業担当者リストでもフォームが表示される', () => {

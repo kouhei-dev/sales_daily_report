@@ -20,6 +20,7 @@ import { usePagination } from '@/hooks/usePagination';
  *
  * 機能:
  * - 営業マスタAPIから担当営業一覧を取得
+ *   - 営業担当者数の想定最大値: 100人（limit=100で全件取得）
  * - 検索フォームの表示
  * - APIからデータ取得
  * - 一覧テーブルの表示
@@ -38,7 +39,7 @@ export function CustomersListPage() {
   useEffect(() => {
     const fetchSalesList = async () => {
       try {
-        const response = await fetch('/api/sales', {
+        const response = await fetch('/api/sales?limit=100', {
           method: 'GET',
           credentials: 'include',
         });
