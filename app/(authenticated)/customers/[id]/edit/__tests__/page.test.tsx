@@ -53,18 +53,60 @@ vi.mock('@prisma/client', () => {
   };
 });
 
+// ヘルパー関数: セッション設定
+const setupValidSession = (isManager = false) => {
+  (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+    sessionId: 'valid-session',
+    salesId: 'test-sales-id',
+    isManager,
+  });
+  (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
+};
+
+const setupInvalidSession = () => {
+  (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+    sessionId: 'invalid-session',
+    salesId: 'test-sales-id',
+    isManager: false,
+  });
+  (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(false);
+};
+
+// ヘルパー関数: 顧客データのモック
+const setupCustomerData = (overrides = {}) => {
+  const defaultCustomerData = {
+    id: '507f1f77bcf86cd799439011',
+    customerCode: 'C001',
+    customerName: '株式会社テスト',
+    industry: 'IT',
+    postalCode: '123-4567',
+    address: '東京都渋谷区',
+    phone: '03-1234-5678',
+    sales: {
+      id: '507f1f77bcf86cd799439012',
+      salesName: '山田太郎',
+      department: {
+        departmentName: '営業1課',
+      },
+    },
+    notes: 'テスト備考',
+    createdAt: new Date('2024-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2024-01-24T00:00:00.000Z'),
+  };
+
+  mockFindUnique.mockResolvedValueOnce({
+    ...defaultCustomerData,
+    ...overrides,
+  });
+};
+
 describe('CustomerEditPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   test('セッションが無効な場合はログイン画面にリダイレクト', async () => {
-    (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      sessionId: 'invalid-session',
-      salesId: 'test-sales-id',
-      isManager: false,
-    });
-    (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(false);
+    setupInvalidSession();
 
     await expect(
       CustomerEditPage({
@@ -76,12 +118,7 @@ describe('CustomerEditPage', () => {
   });
 
   test('無効なIDの場合は一覧画面にリダイレクト', async () => {
-    (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      sessionId: 'valid-session',
-      salesId: 'test-sales-id',
-      isManager: false,
-    });
-    (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
+    setupValidSession();
 
     await expect(
       CustomerEditPage({
@@ -93,13 +130,7 @@ describe('CustomerEditPage', () => {
   });
 
   test('顧客データが見つからない場合は404ページを表示', async () => {
-    (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      sessionId: 'valid-session',
-      salesId: 'test-sales-id',
-      isManager: false,
-    });
-    (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
-
+    setupValidSession();
     mockFindUnique.mockResolvedValueOnce(null);
 
     await expect(
@@ -112,32 +143,8 @@ describe('CustomerEditPage', () => {
   });
 
   test('セッションが有効な場合は編集画面が表示される', async () => {
-    (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      sessionId: 'valid-session',
-      salesId: 'test-sales-id',
-      isManager: false,
-    });
-    (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
-
-    mockFindUnique.mockResolvedValueOnce({
-      id: '507f1f77bcf86cd799439011',
-      customerCode: 'C001',
-      customerName: '株式会社テスト',
-      industry: 'IT',
-      postalCode: '123-4567',
-      address: '東京都渋谷区',
-      phone: '03-1234-5678',
-      sales: {
-        id: '507f1f77bcf86cd799439012',
-        salesName: '山田太郎',
-        department: {
-          departmentName: '営業1課',
-        },
-      },
-      notes: 'テスト備考',
-      createdAt: new Date('2024-01-01T00:00:00.000Z'),
-      updatedAt: new Date('2024-01-24T00:00:00.000Z'),
-    });
+    setupValidSession();
+    setupCustomerData();
 
     const result = await CustomerEditPage({
       params: Promise.resolve({ id: '507f1f77bcf86cd799439011' }),
@@ -156,32 +163,8 @@ describe('CustomerEditPage', () => {
   });
 
   test('Prismaを使用して顧客データを取得する', async () => {
-    (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      sessionId: 'test-session-id',
-      salesId: 'test-sales-id',
-      isManager: false,
-    });
-    (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
-
-    mockFindUnique.mockResolvedValueOnce({
-      id: '507f1f77bcf86cd799439011',
-      customerCode: 'C001',
-      customerName: '株式会社テスト',
-      industry: 'IT',
-      postalCode: '123-4567',
-      address: '東京都渋谷区',
-      phone: '03-1234-5678',
-      sales: {
-        id: '507f1f77bcf86cd799439012',
-        salesName: '山田太郎',
-        department: {
-          departmentName: '営業1課',
-        },
-      },
-      notes: 'テスト備考',
-      createdAt: new Date('2024-01-01T00:00:00.000Z'),
-      updatedAt: new Date('2024-01-24T00:00:00.000Z'),
-    });
+    setupValidSession();
+    setupCustomerData();
 
     await CustomerEditPage({
       params: Promise.resolve({ id: '507f1f77bcf86cd799439011' }),
@@ -207,13 +190,7 @@ describe('CustomerEditPage', () => {
   });
 
   test('Prismaエラー時は一覧画面にリダイレクト', async () => {
-    (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      sessionId: 'valid-session',
-      salesId: 'test-sales-id',
-      isManager: false,
-    });
-    (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
-
+    setupValidSession();
     mockFindUnique.mockRejectedValueOnce(new Error('Database error'));
 
     await expect(
@@ -226,32 +203,8 @@ describe('CustomerEditPage', () => {
   });
 
   test('パンくずリストに一覧画面へのリンクが表示される', async () => {
-    (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      sessionId: 'valid-session',
-      salesId: 'test-sales-id',
-      isManager: false,
-    });
-    (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
-
-    mockFindUnique.mockResolvedValueOnce({
-      id: '507f1f77bcf86cd799439011',
-      customerCode: 'C001',
-      customerName: '株式会社テスト',
-      industry: 'IT',
-      postalCode: '123-4567',
-      address: '東京都渋谷区',
-      phone: '03-1234-5678',
-      sales: {
-        id: '507f1f77bcf86cd799439012',
-        salesName: '山田太郎',
-        department: {
-          departmentName: '営業1課',
-        },
-      },
-      notes: 'テスト備考',
-      createdAt: new Date('2024-01-01T00:00:00.000Z'),
-      updatedAt: new Date('2024-01-24T00:00:00.000Z'),
-    });
+    setupValidSession();
+    setupCustomerData();
 
     const result = await CustomerEditPage({
       params: Promise.resolve({ id: '507f1f77bcf86cd799439011' }),
@@ -264,32 +217,8 @@ describe('CustomerEditPage', () => {
   });
 
   test('管理者がアクセスした場合も編集画面が表示される', async () => {
-    (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      sessionId: 'valid-session',
-      salesId: 'test-sales-id',
-      isManager: true,
-    });
-    (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
-
-    mockFindUnique.mockResolvedValueOnce({
-      id: '507f1f77bcf86cd799439011',
-      customerCode: 'C001',
-      customerName: '株式会社テスト',
-      industry: 'IT',
-      postalCode: '123-4567',
-      address: '東京都渋谷区',
-      phone: '03-1234-5678',
-      sales: {
-        id: '507f1f77bcf86cd799439012',
-        salesName: '山田太郎',
-        department: {
-          departmentName: '営業1課',
-        },
-      },
-      notes: 'テスト備考',
-      createdAt: new Date('2024-01-01T00:00:00.000Z'),
-      updatedAt: new Date('2024-01-24T00:00:00.000Z'),
-    });
+    setupValidSession(true); // isManager = true
+    setupCustomerData();
 
     const result = await CustomerEditPage({
       params: Promise.resolve({ id: '507f1f77bcf86cd799439011' }),
@@ -303,31 +232,13 @@ describe('CustomerEditPage', () => {
   });
 
   test('null値のオプショナルフィールドを正しく処理する', async () => {
-    (getSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      sessionId: 'valid-session',
-      salesId: 'test-sales-id',
-      isManager: false,
-    });
-    (isSessionValid as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
-
-    mockFindUnique.mockResolvedValueOnce({
-      id: '507f1f77bcf86cd799439011',
-      customerCode: 'C001',
-      customerName: '株式会社テスト',
+    setupValidSession();
+    setupCustomerData({
       industry: null,
       postalCode: null,
       address: null,
       phone: null,
-      sales: {
-        id: '507f1f77bcf86cd799439012',
-        salesName: '山田太郎',
-        department: {
-          departmentName: '営業1課',
-        },
-      },
       notes: null,
-      createdAt: new Date('2024-01-01T00:00:00.000Z'),
-      updatedAt: new Date('2024-01-24T00:00:00.000Z'),
     });
 
     const result = await CustomerEditPage({
