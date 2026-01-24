@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
       customer_name: searchParams.get('customer_name') || undefined,
       customer_code: searchParams.get('customer_code') || undefined,
       sales_id: searchParams.get('sales_id') || undefined,
+      sales_name: searchParams.get('sales_name') || undefined,
       page: searchParams.get('page') || '1',
       limit: searchParams.get('limit') || '20',
     };
@@ -53,13 +54,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    const { customer_name, customer_code, sales_id, page, limit } = validationResult.data;
+    const { customer_name, customer_code, sales_id, sales_name, page, limit } =
+      validationResult.data;
 
     // フィルタ条件の構築
     const where: {
       customerName?: { contains: string; mode: 'insensitive' };
       customerCode?: { contains: string; mode: 'insensitive' };
       salesId?: string;
+      sales?: {
+        salesName?: { contains: string; mode: 'insensitive' };
+      };
     } = {};
 
     if (customer_name) {
@@ -70,6 +75,11 @@ export async function GET(request: NextRequest) {
     }
     if (sales_id) {
       where.salesId = sales_id;
+    }
+    if (sales_name) {
+      where.sales = {
+        salesName: { contains: sales_name, mode: 'insensitive' },
+      };
     }
 
     // 総件数の取得
